@@ -1,0 +1,61 @@
+{
+  "name": "ai-context-pack",
+  "version": "0.1.0",
+  "description": "Produce a bounded, reusable package of the most relevant context for an agent task.",
+  "type": "module",
+  "bin": {
+    "context-pack": "dist/cli.js",
+    "ai-context-pack": "dist/cli.js",
+    "cp-tool": "dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "README.vi.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit",
+    "prepack": "npm run build && npm test"
+  },
+  "keywords": [
+    "context",
+    "pack",
+    "llm",
+    "ai",
+    "agent",
+    "token-budget",
+    "context-window",
+    "cli",
+    "mcp"
+  ],
+  "author": "Khoa180806",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^12.1.0",
+    "js-tiktoken": "^1.0.15",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
