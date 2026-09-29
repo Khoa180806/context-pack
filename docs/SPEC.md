@@ -1,73 +1,73 @@
-# T02 — Context Pack: Specification v0.1 (Draft)
+# T02 — Context Pack: Technical Specification
 
 **Canonical ID:** T02  
-**Canonical name:** Context Pack  
-**npm package:** `ai-context-pack`  
-**CLI binary:** `context-pack`, `ai-context-pack`, `cp-tool`  
+**Canonical Name:** Context Pack  
+**npm Package:** `ai-context-pack`  
+**CLI Binaries:** `context-pack`, `ai-context-pack`, `cp-tool`  
 **Level:** 1★  
 **Status:** In Development  
-**Time-box:** 1–2 tuần (~10–20 giờ solo builder)  
-**Applicable decisions:** D-001, D-003, D-008, D-009, D-011, D-019, D-021, D-023 (xem [Decision Log](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/11_DECISION_LOG.md))
+**Time-Box:** 1–2 weeks (~10–20 builder hours)  
+**Applicable Decisions:** D-001, D-003, D-008, D-009, D-011, D-019, D-021, D-023 (see [Decision Log](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/11_DECISION_LOG.md))
 
 ---
 
 ## 1. Objective
 
-### Vấn đề cần giải quyết
+### Problem Statement
 
-Khi AI coding agent nhận một nhiệm vụ (ví dụ: "Sửa lỗi authentication"), agent thường phải:
-1. Tự tìm các file liên quan bằng nhiều tool calls (tốn latency và tokens).
-2. Nạp cả file lớn vào context window (lãng phí tokens vào code không liên quan).
-3. Lặp lại việc này cho mỗi session mới (không tái sử dụng được).
+When an AI coding agent undertakes a development task (e.g., "Fix authentication session invalidation in UserService"), the agent typically:
+1. Manually searches and navigates through numerous files across multiple tool calls, consuming high round-trip latency and token overhead.
+2. Ingests entire raw files into the LLM context window, diluting attention and exhausting token budgets on unrelated logic.
+3. Repeats this discovery and context-loading cycle for each fresh agent session without reusability.
 
-### Giải pháp
+### Proposed Solution
 
-Context Pack tạo ra một **ContextPack artifact** — gói ngữ cảnh có giới hạn, có thể tái sử dụng — chứa chính xác những file/đoạn code phù hợp nhất với nhiệm vụ, trong phạm vi token budget cho phép.
+Context Pack generates a bounded, token-budgeted, reusable **ContextPack artifact** containing only the most relevant slices of source code for a specific agent task under an explicit token ceiling.
 
-### Người dùng mục tiêu (ICP)
+### Target ICP (Ideal Customer Profile)
 
-Developer đang dùng AI coding agent (Cursor, Continue, Claude Code, Copilot, etc.) trên các dự án TypeScript/JavaScript hoặc bất kỳ codebase nào.
+Developers and software engineers using autonomous AI coding agents (e.g., Cursor, Continue, Claude Code, Copilot) on TypeScript/JavaScript codebases or polyglot repositories.
 
-### Định nghĩa thành công
+### Success Criteria
 
-- Giảm ≥20% token tiêu thụ so với nạp thủ công các file liên quan, với tỷ lệ hoàn thành tác vụ không giảm quá 2pp (theo D-011 trong [Decision Log](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/11_DECISION_LOG.md)).
-- Artifact đầu ra có thể đọc máy, tuân thủ common transport envelope (theo [Integration Spec](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/05_INTEGRATION_SPEC.md)).
-- Chạy 100% local, không gửi source code ra ngoài (theo D-009).
-
----
-
-## 2. Phạm vi MVP 1★ (Scope)
-
-### IN SCOPE
-
-| Feature | Mô tả |
-|---------|-------|
-| File-based context selection | Nhận danh sách file/glob pattern, lọc file phù hợp với task |
-| Token budget enforcement | Đảm bảo tổng token ≤ budget, tự cắt/bỏ phần thừa |
-| Relevance ranking | Xếp hạng file theo text similarity đơn giản với task description |
-| Line-range slicing | Chỉ lấy đoạn code liên quan (không phải toàn bộ file) |
-| ContextPack JSON artifact | Xuất ra artifact chuẩn có thể consume bởi agent/tool khác |
-| CLI interface | `context-pack pack`, `--task`, `--files`, `--budget`, `--json`, `--output` |
-| SDK/Library API | Export TypeScript function `pack(options): Promise<ContextPackEnvelope>` |
-| T01 integration | Tương thích với `ai-token-diff` để đo trước/sau |
-
-### OUT OF SCOPE (MVP)
-
-- Semantic embedding / vector search (chuyển sang 2★+ evolution)
-- AST-aware parsing (chuyển sang 3★)
-- MCP server endpoint (chuyển sang 2★ sau khi CLI stable)
-- Remote/cloud mode (bị cấm theo D-009 cho đến khi có security spec)
-- Multi-repo context (chuyển sang 2★+)
-- Caching (do T04 Semantic Cache phụ trách)
+- Reduces total prompt context token consumption by ≥20% compared to full-file ingestion baselines while maintaining task completion within a 2 percentage point margin (D-011 in [Decision Log](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/11_DECISION_LOG.md)).
+- Produces a machine-readable transport envelope conforming strictly to [Integration Spec](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/05_INTEGRATION_SPEC.md).
+- Operates 100% locally with zero external network transmission of proprietary source code (D-009).
 
 ---
 
-## 3. Data Structures
+## 2. 1★ MVP Scope
+
+### In Scope
+
+| Capability | Description |
+|---|---|
+| File-Based Context Selection | Accepts target file paths and glob patterns, resolving matching source files |
+| Token Budget Enforcement | Guarantees cumulative token count ≤ budget by truncating lower-ranked items |
+| Relevance Ranking | Ranks candidates using deterministic TF-IDF term frequency against the task brief |
+| Line-Range Slicing | Extracts high-density code windows instead of entire files |
+| ContextPack JSON Artifact | Emits standard envelopes consumed programmatically by agents and pipelines |
+| CLI Interface | `context-pack pack`, supporting `--task`, `--files`, `--budget`, `--json`, `--output` |
+| SDK / Library API | Exports typed programmatic entry points `pack(options): Promise<ContextPackEnvelope>` |
+| Ecosystem Composition | Composes with `token-diff` (`ai-token-diff`) for deterministic before/after verification |
+
+### Out of Scope (1★ MVP)
+
+- Dense semantic vector embeddings (deferred to 2★+ evolution)
+- Full AST dependency graph parsing (deferred to 3★ foundation)
+- Dedicated MCP daemon server (scheduled for 2★ once CLI stabilizes)
+- Remote cloud storage or telemetry (prohibited by D-009 without formal security specifications)
+- Multi-repository workspace federation (deferred to 2★+)
+- Response caching layer (delegated to T04 Semantic Cache)
+
+---
+
+## 3. Data Structures & Contracts
 
 ### Input: `PackOptions`
 
 ```typescript
-interface PackOptions {
+export interface PackOptions {
   task: string;
   files: string[];
   budget?: number;        // default: 4000
@@ -78,25 +78,21 @@ interface PackOptions {
 }
 ```
 
-### Output: `ContextPack` (Common Transport Envelope)
+### Output: `ContextPackEnvelope`
 
-Tham khảo envelope chuẩn tại [Integration Spec](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/05_INTEGRATION_SPEC.md).
+Conforms to the standardized envelope specification in [Integration Spec](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/05_INTEGRATION_SPEC.md).
 
 ```typescript
-interface ContextPackEnvelope {
-  data: ContextPackData;
-  metadata: EnvelopeMetadata;
+export interface ContextSlice {
+  file: string;
+  start_line: number;
+  end_line: number;
+  tokens: number;
+  relevance_score: number;
+  content: string;
 }
 
-interface EnvelopeMetadata {
-  schema_version: "1.0";
-  source: "context-pack";
-  duration_ms: number;
-  truncated: boolean;
-  next_cursor: null;
-}
-
-interface ContextPackData {
+export interface ContextPackData {
   task: string;
   budget_tokens: number;
   used_tokens: number;
@@ -106,78 +102,83 @@ interface ContextPackData {
   slices: ContextSlice[];
 }
 
-interface ContextSlice {
-  file: string;            // Relative path
-  start_line: number;      // 1-indexed
-  end_line: number;        // 1-indexed, inclusive
-  tokens: number;
-  relevance_score: number; // 0.0 - 1.0
-  content: string;
+export interface EnvelopeMetadata {
+  schema_version: '1.0';
+  source: 'context-pack';
+  duration_ms: number;
+  truncated: boolean;
+  next_cursor: null;
+}
+
+export interface ContextPackEnvelope {
+  data: ContextPackData;
+  metadata: EnvelopeMetadata;
 }
 ```
 
 ---
 
-## 4. Relevance Strategy (MVP)
+## 4. Relevance & Slicing Strategy (MVP)
 
-MVP dùng **TF-IDF text similarity** đơn giản giữa `task` description và nội dung file:
+The 1★ implementation employs a deterministic, zero-dependency **TF-IDF Keyword Relevance Model**:
 
-1. Tokenize task thành keywords (lowercase, split by whitespace/punctuation).
-2. Với mỗi file: tính term frequency của keywords trong nội dung file.
-3. Score = tỷ lệ keywords xuất hiện trong file.
-4. Sắp xếp file theo score giảm dần.
-5. Slice từng file: trích xuất đoạn code có mật độ từ khóa cao nhất (tối đa `maxSliceLines`).
-
-> **Lý do không dùng embedding:** MVP giữ zero-dependency ngoài `js-tiktoken`. Embedding đòi hỏi model inference, không phù hợp local-first gọn nhẹ. Sẽ mở rộng tại 2★.
+1. **Task Tokenization**: Normalizes task prompt into lowercase keyword tokens, pruning common English stop words and punctuation.
+2. **Frequency Scoring**: Evaluates term frequency and occurrence density across candidate source files.
+3. **Relevance Ranking**: Computes a normalized relevance score ($0.0 \le \text{score} \le 1.0$) per file, sorting candidates in descending order.
+4. **Window Slicing**: Identifies the code segment with the highest keyword match density (bounded by `maxSliceLines`).
+5. **Greedy Budget Packing**: Sequentially appends ranked slices until appending another slice would exceed `budget_tokens`. Slices exceeding the budget are omitted, marking `truncated: true`.
 
 ---
 
 ## 5. CLI Interface
 
-### Commands
+### Command Usage
 
 ```bash
-# Main command
+# Standard packing command
 context-pack pack \
   --task "Fix the authentication bug in UserService" \
   --files "src/auth/**/*.ts" "src/services/UserService.ts" \
   --budget 4000 \
   --json
 
-# Short form aliases
-cp-tool pack -t "Refactor login" -f src/ -b 8000
+# Alias invocation with short flags
+cp-tool pack -t "Refactor login session" -f src/ -b 8000
 
-# Output to file
-context-pack pack --task "..." --files src/ --output context.pack.json
+# Write artifact to file
+context-pack pack --task "Fix auth bug" --files src/ --output context.pack.json
 ```
 
-### Flags
+### Command Flags
 
-| Flag | Short | Default | Mô tả |
-|------|-------|---------|-------|
-| `--task <text>` | `-t` | required | Mô tả nhiệm vụ |
-| `--files <globs...>` | `-f` | required | File paths hoặc glob patterns |
-| `--budget <n>` | `-b` | `4000` | Token budget |
-| `--encoding <name>` | | `cl100k_base` | Tiktoken encoding |
-| `--min-relevance <n>` | | `0` | Ngưỡng relevance tối thiểu (0–1) |
-| `--output <file>` | `-o` | | Ghi artifact ra file |
-| `--json` | | false | Xuất JSON thay vì human-readable |
-| `--version` | `-V` | | Xem phiên bản |
-| `--help` | `-h` | | Xem hướng dẫn |
+| Flag | Short | Default | Description |
+|---|---|---|---|
+| `--task <text>` | `-t` | required | Task instruction / prompt description |
+| `--files <globs...>` | `-f` | required | Target file paths or glob patterns |
+| `--budget <n>` | `-b` | `4000` | Maximum token ceiling |
+| `--encoding <name>` | | `cl100k_base` | Tiktoken tokenizer encoding |
+| `--min-relevance <n>` | | `0` | Minimum score threshold (0.0–1.0) |
+| `--output <file>` | `-o` | | Write envelope payload to designated JSON path |
+| `--json` | | `false` | Emit machine-readable JSON to stdout |
+| `--version` | `-V` | | Output binary version |
+| `--help` | `-h` | | Display command usage and documentation |
 
-### Exit codes (theo [Integration Spec](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/05_INTEGRATION_SPEC.md))
+### Exit Codes
 
-| Code | Ý nghĩa |
-|------|---------|
-| 0 | Thành công |
-| 1 | Lỗi chung |
-| 2 | Input không hợp lệ |
-| 3 | Không tìm thấy file |
-| 5 | Thiếu dependency |
+Conforms to [Integration Spec](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/05_INTEGRATION_SPEC.md):
 
-### Human-readable output (mặc định)
+| Exit Code | Identifier | Description |
+|---|---|---|
+| `0` | Success | Operation completed successfully |
+| `1` | General Failure | Internal runtime or unexpected error |
+| `2` | Invalid Input | Malformed arguments or budget below threshold |
+| `3` | Not Found | Target file or glob pattern matched zero files |
+| `4` | Permission Denied | Filesystem access restricted |
+| `5` | Dependency Unavailable | Required tokenizer or module failed to initialize |
 
-```
+### Terminal Output Preview (Human-Readable)
+
+```text
 Context Pack — T02
 Task: Fix the authentication bug in UserService
 Budget: 4000 tokens
@@ -192,37 +193,37 @@ Total: 1340 / 4000 tokens  |  3 slices from 3 files  |  43ms
 
 ---
 
-## 6. SDK / Library API
+## 6. Programmatic SDK Usage
 
 ```typescript
 import { pack, type PackOptions, type ContextPackEnvelope } from 'ai-context-pack';
 
 const result: ContextPackEnvelope = await pack({
-  task: 'Fix the authentication bug',
+  task: 'Fix authentication session invalidation',
   files: ['src/auth/**/*.ts', 'src/services/UserService.ts'],
   budget: 4000,
 });
 
-console.log(result.data.used_tokens);
-console.log(result.data.slices);
+console.log(`Used tokens: ${result.data.used_tokens}`);
+console.log(`Slices extracted: ${result.data.slices.length}`);
 ```
 
 ---
 
-## 7. Source Code Structure
+## 7. Project Architecture & Directory Layout
 
-```
+```text
 context_pack/
 ├── src/
-│   ├── index.ts         # Package entry — exports pack(), types
-│   ├── cli.ts           # CLI entry — commander setup
-│   ├── packer.ts        # Core packing logic
-│   ├── ranker.ts        # Relevance ranking (TF-IDF)
-│   ├── slicer.ts        # File reading + line-range slicing
-│   ├── tokenizer.ts     # Token counting via js-tiktoken
-│   ├── formatter.ts     # Human-readable output formatter
-│   ├── types.ts         # TypeScript types/interfaces
-│   └── errors.ts        # Error codes + ContextPackError class
+│   ├── index.ts         # Public SDK export entry point
+│   ├── cli.ts           # Commander CLI registration & execution
+│   ├── packer.ts        # Orchestrator: resolve -> rank -> slice -> budget
+│   ├── ranker.ts        # TF-IDF keyword relevance evaluation
+│   ├── slicer.ts        # Filesystem resolver & line-window slicing
+│   ├── tokenizer.ts     # Token counting engine via js-tiktoken
+│   ├── formatter.ts     # Terminal ANSI tabular output formatter
+│   ├── types.ts         # TypeScript interfaces & domain models
+│   └── errors.ts        # Error codes & ContextPackError hierarchy
 ├── test/
 │   ├── packer.test.ts
 │   ├── ranker.test.ts
@@ -230,7 +231,7 @@ context_pack/
 │   ├── tokenizer.test.ts
 │   └── cli.test.ts
 ├── docs/
-│   └── SPEC.md
+│   └── SPEC.md          # Technical specification
 ├── .gitignore
 ├── package.json
 ├── tsconfig.json
@@ -241,10 +242,10 @@ context_pack/
 
 ---
 
-## 8. Error Model
+## 8. Deterministic Error Model
 
 ```typescript
-type ContextPackErrorCode =
+export type ContextPackErrorCode =
   | 'INVALID_INPUT'
   | 'NOT_FOUND'
   | 'PERMISSION_DENIED'
@@ -253,96 +254,100 @@ type ContextPackErrorCode =
   | 'ENCODING_UNSUPPORTED'
   | 'INTERNAL_ERROR';
 
-class ContextPackError extends Error {
+export class ContextPackError extends Error {
+  readonly code: ContextPackErrorCode;
+  readonly details?: Record<string, unknown>;
+
   constructor(
-    public readonly code: ContextPackErrorCode,
+    code: ContextPackErrorCode,
     message: string,
-    public readonly details?: Record<string, unknown>
-  ) { ... }
-}
-```
+    details?: Record<string, unknown>,
+  ) {
+    super(message);
+    this.name = 'ContextPackError';
+    this.code = code;
+    this.details = details;
+    Object.setPrototypeOf(this, ContextPackError.prototype);
+  }
 
-JSON error envelope (theo [Integration Spec](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/05_INTEGRATION_SPEC.md)):
-
-```json
-{
-  "error": {
-    "code": "BUDGET_TOO_SMALL",
-    "message": "Budget of 50 tokens is below the minimum of 100",
-    "details": { "provided": 50, "minimum": 100 }
-  },
-  "metadata": {
-    "schema_version": "1.0"
+  toEnvelope(): object {
+    return {
+      error: {
+        code: this.code,
+        message: this.message,
+        ...(this.details ? { details: this.details } : {}),
+      },
+      metadata: {
+        schema_version: '1.0',
+      },
+    };
   }
 }
 ```
 
 ---
 
-## 9. Security & Privacy
+## 9. Security & Privacy Policy
 
-- **Local-first (D-009):** Mọi xử lý diễn ra trên máy local, không network call.
-- **Path validation:** Không cho phép path traversal (`../`). Chỉ đọc file trong working directory hoặc đường dẫn được chỉ định tường minh.
-- **Bảo mật credentials:** Không đưa credentials/secrets từ `.env` vào kết quả.
-- **No remote mode** ở MVP.
+- **Local-First Processing (D-009)**: All scanning, tokenization, and slicing occur in-process in memory. Zero external network calls.
+- **Path Traversal Protection**: Rejects unauthorized relative path escapes (`../`) outside the intended workspace boundaries.
+- **Secret Sanitization**: Scans and excludes common secret files (`.env`, `id_rsa`, certificates) from context packing.
 
 ---
 
-## 10. Benchmark Plan
+## 10. Benchmark & Validation Plan
 
-Tuân thủ định hướng tại [Benchmark Plan](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/10_BENCHMARK_PLAN.md).
+Aligned with [Benchmark Plan](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/10_BENCHMARK_PLAN.md).
 
-### Baseline comparison
+### Baselines
 
-| Baseline | Mô tả |
-|----------|-------|
-| B0-manual | Developer/agent nạp thủ công toàn bộ file liên quan |
-| B1-raw-glob | Dùng glob để lấy file nhưng không rank, không slice |
-| B2-context-pack | Dùng `ai-context-pack` với budget=4000 |
+| Baseline | Strategy |
+|---|---|
+| B0 (Unassisted) | Full-file ingestion without ranking or windowing |
+| B1 (Raw Glob) | File-level ingestion matching globs without token budget enforcement |
+| B2 (Ecosystem Prototype) | `ai-context-pack` with budget constraint (4,000 tokens) |
 
-### Task set (MVP benchmark)
+### Test Workload (5 Benchmark Tasks)
 
-5 coding tasks trên 1 TypeScript repository:
 1. "Fix the CLI argument parsing for --encoding flag"
 2. "Add error handling for missing input files"
 3. "Refactor the tokenizer module to support multiple encodings"
 4. "Write tests for the formatter module"
 5. "Explain how token counting works in this codebase"
 
-### Metrics
+### Evaluation Metrics
 
-- `input_tokens` khi agent nhận context.
-- `task_success` (đánh giá mức độ hoàn thành tác vụ).
-- `wall_clock_ms` (thời gian xử lý pack).
+- `input_tokens`: Cumulative prompt tokens dispatched to the agent.
+- `task_success`: Verified task resolution without regression.
+- `wall_clock_ms`: Execution latency of context generation.
 
-### Pass threshold (D-011)
+### Pass Thresholds (D-011)
 
-Đạt khi so với B0-manual:
-- **A.** Giảm ≥20% `input_tokens` với `task_success` không giảm quá 2pp, HOẶC
-- **B.** `task_success` tăng ≥10pp với `input_tokens` tăng ≤20%.
-
----
-
-## 11. Roadmap sau MVP
-
-| Milestone | Feature |
-|-----------|---------|
-| v0.2 | MCP server endpoint |
-| v0.3 | Embedding-based relevance (local model) |
-| v0.4 | Compose với T03 Tool Result Compressor |
-| v1.0 | 1★ Stable — đáp ứng đầy đủ tiêu chí tại [Tool Lifecycle](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/04_TOOL_LIFECYCLE.md) |
+- **Condition A**: $\ge 20\%$ prompt token reduction vs. B0 with task completion degradation $\le 2\text{pp}$, OR
+- **Condition B**: $\ge 10\text{pp}$ task success improvement with token expansion $\le 20\%$.
 
 ---
 
-## 12. Implementation Checklist (1★ Stable criteria)
+## 11. Post-MVP Roadmap
 
-- [ ] Standalone use (CLI + SDK)
-- [ ] Canonical ID `T02` + name `Context Pack` (theo [Tool Catalog](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/03_TOOL_CATALOG.md))
-- [ ] Versioned input/output schema (`schema_version: "1.0"`)
-- [ ] Tests (unit + integration)
-- [ ] Benchmark results documented
-- [ ] Documented failure modes
-- [ ] Security/privacy notes
-- [ ] Cập nhật [Tool Catalog](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/03_TOOL_CATALOG.md) status → `Stable`
-- [ ] Cập nhật [Roadmap](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/06_ROADMAP.md)
-- [ ] Ghi nhận vào [Decision Log](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/11_DECISION_LOG.md) nếu có thay đổi kiến trúc
+| Phase | Milestone | Focus |
+|---|---|---|
+| v0.2 | MCP Adapter | Expose tool endpoint for agent orchestration |
+| v0.3 | Local Embeddings | Semantic embedding similarity fallback |
+| v0.4 | Pipeline Composition | Native composition with T03 Tool Result Compressor |
+| v1.0 | 1★ Stable Promotion | Full verification against [Tool Lifecycle](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/04_TOOL_LIFECYCLE.md) |
+
+---
+
+## 12. 1★ Stable Promotion Checklist
+
+- [ ] Standalone CLI and SDK interfaces functional
+- [ ] Canonical naming and ID verified against [Tool Catalog](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/03_TOOL_CATALOG.md)
+- [ ] Envelope payload verified against [Integration Spec](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/05_INTEGRATION_SPEC.md)
+- [ ] 100% unit and integration test pass rate
+- [ ] Benchmark results documented with measurable token savings
+- [ ] Documented error states and failure modes
+- [ ] Security boundaries audited
+- [ ] Update [Tool Catalog](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/03_TOOL_CATALOG.md) status to `Stable`
+- [ ] Update [Roadmap](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/06_ROADMAP.md)
+- [ ] Record promotion in [Decision Log](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/11_DECISION_LOG.md)
