@@ -17,10 +17,11 @@ export class ContextPackError extends Error {
     this.name = 'ContextPackError';
     this.code = code;
     this.details = details;
+    // Ensure correct prototype chain when extending Error in TypeScript
     Object.setPrototypeOf(this, ContextPackError.prototype);
   }
 
-  /** Chuyển error thành JSON envelope (docs/05_INTEGRATION_SPEC.md). */
+  /** Convert error to JSON envelope (docs/05_INTEGRATION_SPEC.md). */
   toEnvelope(): object {
     return {
       error: {

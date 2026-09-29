@@ -12,14 +12,14 @@
 
 /** Options passed to the pack() function or CLI. */
 export interface PackOptions {
-  /** Mô tả nhiệm vụ — dùng để rank relevance của từng file. */
+  /** Task description — used to rank file relevance. */
   task: string;
 
-  /** Danh sách file paths hoặc glob patterns. */
+  /** List of file paths or glob patterns. */
   files: string[];
 
   /**
-   * Token budget tối đa.
+   * Maximum token budget.
    * @default 4000
    * @minimum 100
    */
@@ -32,18 +32,18 @@ export interface PackOptions {
   encoding?: string;
 
   /**
-   * Số dòng tối đa mỗi slice.
+   * Maximum lines per slice.
    * @default 100
    */
   maxSliceLines?: number;
 
   /**
-   * Ngưỡng relevance tối thiểu (0–1). File có score thấp hơn bị bỏ qua.
+   * Minimum relevance threshold (0–1). Files below this score are skipped.
    * @default 0
    */
   minRelevance?: number;
 
-  /** Nếu có, ghi ContextPackEnvelope ra file JSON này. */
+  /** If set, write the ContextPackEnvelope to this JSON file. */
   outputFile?: string;
 }
 
@@ -51,37 +51,37 @@ export interface PackOptions {
 // Output — Data layer
 // ---------------------------------------------------------------------------
 
-/** Một đoạn (slice) ngữ cảnh trích xuất từ file. */
+/** A context slice extracted from a source file. */
 export interface ContextSlice {
-  /** Path tương đối tới file. */
+  /** Relative path to the file. */
   file: string;
 
-  /** Dòng bắt đầu (1-indexed, inclusive). */
+  /** Start line (1-indexed, inclusive). */
   start_line: number;
 
-  /** Dòng kết thúc (1-indexed, inclusive). */
+  /** End line (1-indexed, inclusive). */
   end_line: number;
 
-  /** Số token trong slice này. */
+  /** Token count for this slice. */
   tokens: number;
 
-  /** Điểm liên quan (0.0–1.0). */
+  /** Relevance score (0.0–1.0). */
   relevance_score: number;
 
-  /** Nội dung đoạn code. */
+  /** Actual code content of the slice. */
   content: string;
 }
 
-/** Phần data chính của ContextPackEnvelope. */
+/** Main data payload of the ContextPackEnvelope. */
 export interface ContextPackData {
   task: string;
   budget_tokens: number;
   used_tokens: number;
   file_count: number;
   slice_count: number;
-  /** True nếu một số file/slices bị bỏ do vượt budget. */
+  /** True if some files/slices were dropped due to budget overflow. */
   truncated: boolean;
-  /** Danh sách slices, sort theo relevance_score giảm dần. */
+  /** List of slices, sorted by relevance_score descending. */
   slices: ContextSlice[];
 }
 
@@ -89,17 +89,17 @@ export interface ContextPackData {
 // Output — Transport envelope (docs/05_INTEGRATION_SPEC.md)
 // ---------------------------------------------------------------------------
 
-/** Metadata chuẩn của common transport envelope. */
+/** Standard metadata for the common transport envelope. */
 export interface EnvelopeMetadata {
   schema_version: '1.0';
   source: 'context-pack';
   duration_ms: number;
   truncated: boolean;
-  /** Reserved cho pagination — luôn null ở MVP. */
+  /** Reserved for pagination — always null in MVP. */
   next_cursor: null;
 }
 
-/** Common transport envelope — đầu ra chuẩn của Context Pack. */
+/** Common transport envelope — standard output of Context Pack. */
 export interface ContextPackEnvelope {
   data: ContextPackData;
   metadata: EnvelopeMetadata;
@@ -109,7 +109,7 @@ export interface ContextPackEnvelope {
 // Error types
 // ---------------------------------------------------------------------------
 
-/** Tất cả error codes của Context Pack. */
+/** All error codes for Context Pack. */
 export type ContextPackErrorCode =
   | 'INVALID_INPUT'
   | 'NOT_FOUND'
