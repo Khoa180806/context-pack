@@ -46,6 +46,7 @@
   "license": "MIT",
   "dependencies": {
     "commander": "^12.1.0",
+    "fast-glob": "^3.3.3",
     "js-tiktoken": "^1.0.15",
     "picocolors": "^1.1.1"
   },
