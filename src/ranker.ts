@@ -1,3 +1,5 @@
+import { VI_EN_SYNONYMS, removeVietnameseAccents } from './dictionary.js';
+
 export interface FileToRank {
   file: string;
   content: string;
@@ -10,21 +12,49 @@ export interface RankedFile {
 }
 
 const COMMON_STOP_WORDS = new Set([
+  // English stop words
   'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from',
   'has', 'he', 'in', 'is', 'it', 'its', 'of', 'on', 'that', 'the',
-  'to', 'was', 'were', 'will', 'with', 'the', 'this', 'but', 'they',
+  'to', 'was', 'were', 'will', 'with', 'this', 'but', 'they',
+  // Vietnamese stop words
+  'cua', 'va', 'cho', 'trong', 'cac', 'nhung', 'de', 'o', 'tai',
+  've', 'la', 'mot', 'nay', 'do', 'ra', 'vao', 'nhu',
 ]);
 
 export function extractKeywords(task: string): string[] {
   if (!task) return [];
 
-  // Tokenize words, convert to lowercase, filter out stop words and short tokens
-  const tokens = task
-    .toLowerCase()
+  // Normalize Unicode and convert Vietnamese to accent-free ASCII
+  const rawLower = task.toLowerCase();
+  const normalizedTask = removeVietnameseAccents(rawLower);
+
+  const keywords = new Set<string>();
+
+  // Match multi-word phrases from dictionary first
+  for (const [phrase, synonyms] of Object.entries(VI_EN_SYNONYMS)) {
+    if (normalizedTask.includes(phrase)) {
+      for (const syn of synonyms) {
+        keywords.add(syn);
+      }
+    }
+  }
+
+  // Tokenize individual words
+  const tokens = normalizedTask
     .split(/[^a-z0-9_]+/)
     .filter((word) => word.length > 1 && !COMMON_STOP_WORDS.has(word));
 
-  return Array.from(new Set(tokens));
+  for (const token of tokens) {
+    keywords.add(token);
+    // Expand single-word synonyms if present in dictionary
+    if (VI_EN_SYNONYMS[token]) {
+      for (const syn of VI_EN_SYNONYMS[token]) {
+        keywords.add(syn);
+      }
+    }
+  }
+
+  return Array.from(keywords);
 }
 
 export function scoreFileRelevance(

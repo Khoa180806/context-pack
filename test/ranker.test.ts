@@ -19,6 +19,25 @@ describe('extractKeywords', () => {
     expect(extractKeywords('')).toEqual([]);
     expect(extractKeywords('in the and of')).toEqual([]);
   });
+
+  it('expands Vietnamese prompts with technical synonyms into English keywords', () => {
+    const taskViWithAccents = 'Sửa lỗi đăng nhập và xác thực tài khoản';
+    const keywords = extractKeywords(taskViWithAccents);
+
+    // Should include expanded English synonyms
+    expect(keywords).toContain('login');
+    expect(keywords).toContain('auth');
+    expect(keywords).toContain('account');
+    expect(keywords).toContain('fix');
+    // Stop words should be removed
+    expect(keywords).not.toContain('va');
+  });
+
+  it('treats Vietnamese with accents and without accents identically', () => {
+    const withAccents = extractKeywords('dang nhap');
+    const withoutAccents = extractKeywords('đăng nhập');
+    expect(withAccents).toEqual(withoutAccents);
+  });
 });
 
 describe('scoreFileRelevance', () => {
@@ -80,6 +99,15 @@ describe('rankFiles', () => {
     expect(ranked[0].score).toBeGreaterThanOrEqual(ranked[1].score);
     expect(ranked[1].score).toBeGreaterThanOrEqual(ranked[2].score);
     expect(ranked[0].file).toBe('src/services/UserService.ts');
+  });
+
+  it('ranks English code files accurately from pure Vietnamese task prompt', () => {
+    const taskVi = 'Sửa lỗi đăng nhập người dùng';
+    const ranked = rankFiles(files, taskVi);
+
+    // UserService with login() must be ranked #1 even though the prompt was pure Vietnamese
+    expect(ranked[0].file).toBe('src/services/UserService.ts');
+    expect(ranked[0].score).toBeGreaterThan(ranked[2].score);
   });
 
   it('filters out files below minRelevance', () => {
