@@ -118,7 +118,7 @@
       "id": "json_envelope",
       "type": "external",
       "label": "JSON Envelope",
-      "sublabel": "D-011 Common Transport",
+      "sublabel": "Standard Transport Contract",
       "tag": "Agent Automation",
       "pos": [920, 240],
       "size": [160, 64],

@@ -6,11 +6,11 @@
   "status": "pass",
   "visualReview": "not-requested",
   "provenance": "current",
-  "deliveryReceiptId": "d4418e84-d24f-4640-9566-79eed96b4745",
+  "deliveryReceiptId": "4091e3eb-3097-4359-a5e2-aa4b30bdbbbd",
   "artifact": {
     "path": "D:\\Project\\context_pack\\.archify\\architecture-context-pack-20261009-172300\\context-pack.html",
-    "sha256": "928a27ae77527475a8a51d19b193de7d50d4482dcce492943157697fc5109cf3",
-    "bytes": 759199
+    "sha256": "fe75355a53ba858692623a480c0397635c382fee11a17a82d73a0f7f208f074c",
+    "bytes": 759219
   },
   "state": {
     "detail": "read",

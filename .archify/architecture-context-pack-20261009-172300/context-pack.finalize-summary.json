@@ -7,13 +7,13 @@
   "quality": "showcase",
   "specification": {
     "path": "D:\\Project\\context_pack\\.archify\\architecture-context-pack-20261009-172300\\candidate.json",
-    "sha256": "ab6707964a93a627151ae8c2effbf3baae5b7a4a56f64f6ed9f688d1eb1f9a2a",
-    "bytes": 5010
+    "sha256": "4e6a05b031537d62a39f47c27de5be69f52c3123b7f21212edc42a6686aa440c",
+    "bytes": 5015
   },
   "artifact": {
     "path": "D:\\Project\\context_pack\\.archify\\architecture-context-pack-20261009-172300\\context-pack.html",
-    "sha256": "928a27ae77527475a8a51d19b193de7d50d4482dcce492943157697fc5109cf3",
-    "bytes": 759199
+    "sha256": "fe75355a53ba858692623a480c0397635c382fee11a17a82d73a0f7f208f074c",
+    "bytes": 759219
   },
   "gates": {
     "validate": "pass",
@@ -43,5 +43,5 @@
     "noticeText": null
   },
   "visualReview": "not-requested",
-  "durationMs": 6451
+  "durationMs": 6025
 }
