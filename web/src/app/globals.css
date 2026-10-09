@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --background: #090d16;
+    --foreground: #f8fafc;
+    --card: #141c2e;
+    --card-foreground: #f8fafc;
+    --surface: #0f172a;
+    --border: #1e293b;
+    --border-hover: #334155;
+    --primary: #00f2fe;
+    --primary-foreground: #090d16;
+    --secondary: #6366f1;
+    --secondary-foreground: #ffffff;
+    --accent: #38bdf8;
+    --muted: #1e293b;
+    --muted-foreground: #94a3b8;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+  }
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-feature-settings: "rlig" 1, "calt" 1;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #090d16;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Subtle glowing utility classes */
+.glow-cyan {
+  box-shadow: 0 0 25px -5px rgba(0, 242, 254, 0.15);
+}
+
+.glow-indigo {
+  box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.15);
+}
