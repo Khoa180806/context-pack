@@ -135,18 +135,13 @@ The 1★ implementation employs a deterministic, zero-dependency **TF-IDF Keywor
 ### Command Usage
 
 ```bash
-# Standard packing command
-context-pack pack \
-  --task "Fix the authentication bug in UserService" \
-  --files "src/auth/**/*.ts" "src/services/UserService.ts" \
-  --budget 4000 \
-  --json
+# Ultra-short invocation (cx alias + direct flags)
+cx -t "Fix the authentication bug in UserService" -f "src/auth/**/*.ts" "src/services/UserService.ts" -b 4000 --json
 
-# Alias invocation with short flags
-cp-tool pack -t "Refactor login session" -f src/ -b 8000
-
-# Write artifact to file
+# Standard binary invocation
 context-pack pack --task "Fix auth bug" --files src/ --output context.pack.json
+
+# Short aliases available: `cx`, `cpack`, `context-pack`, `ai-context-pack`
 ```
 
 ### Command Flags

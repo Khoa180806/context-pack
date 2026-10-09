@@ -4,9 +4,10 @@
   "description": "Produce a bounded, reusable package of the most relevant context for an agent task.",
   "type": "module",
   "bin": {
+    "cx": "dist/cli.js",
+    "cpack": "dist/cli.js",
     "context-pack": "dist/cli.js",
-    "ai-context-pack": "dist/cli.js",
-    "cp-tool": "dist/cli.js"
+    "ai-context-pack": "dist/cli.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

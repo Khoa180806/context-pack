@@ -3,7 +3,6 @@ import { fork } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-const tsxLoaderPath = path.resolve('node_modules/tsx/dist/loader.mjs');
 const cliScriptPath = path.resolve('src/cli.ts');
 const fixtureDir = path.resolve('test/__cli_fixtures__');
 
@@ -58,7 +57,7 @@ describe('CLI Integration Tests', () => {
   it('exits with code 0 on --help', async () => {
     const res = await runCli(['--help']);
     expect(res.exitCode).toBe(0);
-    expect(res.stdout).toContain('context-pack');
+    expect(res.stdout).toContain('cx');
   });
 
   it('exits with code 0 on --version', async () => {
@@ -68,12 +67,29 @@ describe('CLI Integration Tests', () => {
   });
 
   it('fails with exit code 2 when required options are missing', async () => {
-    const res = await runCli(['pack']);
+    const res = await runCli([]);
     expect(res.exitCode).toBe(2);
     expect(res.stderr).toContain("required option '-t, --task <text>' not specified");
   });
 
-  it('packs context and outputs human-readable report by default', async () => {
+  it('packs context directly without pack command keyword (super short syntax)', async () => {
+    const targetFile = path.join(fixtureDir, 'UserService.ts');
+    const res = await runCli([
+      '-t',
+      'Fix user login logic',
+      '-f',
+      targetFile,
+      '-b',
+      '1000',
+    ]);
+
+    expect(res.exitCode).toBe(0);
+    expect(res.stdout).toContain('Context Pack — T02');
+    expect(res.stdout).toContain('UserService.ts');
+    expect(res.stdout).toContain('Total:');
+  });
+
+  it('packs context using explicit pack command keyword for backwards compatibility', async () => {
     const targetFile = path.join(fixtureDir, 'UserService.ts');
     const res = await runCli([
       'pack',
@@ -94,10 +110,9 @@ describe('CLI Integration Tests', () => {
   it('outputs valid JSON envelope with --json flag', async () => {
     const targetFile = path.join(fixtureDir, 'UserService.ts');
     const res = await runCli([
-      'pack',
-      '--task',
+      '-t',
       'Fix user login logic',
-      '--files',
+      '-f',
       targetFile,
       '--budget',
       '1000',
@@ -114,10 +129,9 @@ describe('CLI Integration Tests', () => {
 
   it('outputs JSON error envelope and non-zero exit code on domain error', async () => {
     const res = await runCli([
-      'pack',
-      '--task',
+      '-t',
       'Test error',
-      '--files',
+      '-f',
       'non_existent_folder/**/*.ts',
       '--json',
     ]);

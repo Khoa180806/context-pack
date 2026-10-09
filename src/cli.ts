@@ -7,8 +7,86 @@ import { ContextPackError, ERROR_EXIT_CODES } from './errors.js';
 
 const program = new Command();
 
+async function handlePack(opts: any) {
+  const isJson = Boolean(opts.json);
+
+  try {
+    const budget = Number.parseInt(opts.budget, 10);
+    if (Number.isNaN(budget)) {
+      throw new ContextPackError('INVALID_INPUT', 'Budget must be a valid integer.');
+    }
+
+    const maxSliceLines = Number.parseInt(opts.maxSliceLines, 10);
+    const minRelevance = Number.parseFloat(opts.minRelevance);
+
+    const envelope = await pack({
+      task: opts.task,
+      files: Array.isArray(opts.files) ? opts.files : [opts.files],
+      budget,
+      encoding: opts.encoding,
+      maxSliceLines,
+      minRelevance,
+      outputFile: opts.output,
+    });
+
+    if (isJson) {
+      process.stdout.write(JSON.stringify(envelope, null, 2) + '\n');
+    } else {
+      process.stdout.write(formatResult(envelope) + '\n');
+    }
+
+    process.exit(0);
+  } catch (error: any) {
+    if (error instanceof ContextPackError) {
+      const exitCode = ERROR_EXIT_CODES[error.code] ?? 1;
+      if (isJson) {
+        process.stdout.write(JSON.stringify(error.toEnvelope(), null, 2) + '\n');
+      } else {
+        process.stderr.write(pc.red(`[ERROR ${error.code}] ${error.message}\n`));
+      }
+      process.exit(exitCode);
+    }
+
+    if (isJson) {
+      process.stdout.write(
+        JSON.stringify(
+          {
+            error: {
+              code: 'INTERNAL_ERROR',
+              message: error.message || 'Unknown error occurred.',
+            },
+            metadata: { schema_version: '1.0' },
+          },
+          null,
+          2,
+        ) + '\n',
+      );
+    } else {
+      process.stderr.write(pc.red(`[INTERNAL_ERROR] ${error.message || error}\n`));
+    }
+    process.exit(1);
+  }
+}
+
+// Normalize args: if user invoked without 'pack' subcommand, rewrite argv so commander runs pack subcommand
+const rawArgs = process.argv.slice(2);
+const firstArg = rawArgs[0];
+const isSubcommandOrHelp =
+  !firstArg ||
+  firstArg === 'pack' ||
+  firstArg === 'help' ||
+  firstArg === '--help' ||
+  firstArg === '-h' ||
+  firstArg === '--version' ||
+  firstArg === '-V';
+
+if (!isSubcommandOrHelp) {
+  // Prepend 'pack' subcommand so users can do `cx -t "..." -f "..."`
+  process.argv.splice(2, 0, 'pack');
+}
+
 program
-  .name('context-pack')
+  .name('cx')
   .description('Produce a bounded, reusable package of the most relevant context for an agent task')
   .version('0.1.0')
   .exitOverride((err) => {
@@ -19,7 +97,7 @@ program
   });
 
 program
-  .command('pack')
+  .command('pack', { isDefault: true })
   .description('Package the most relevant context slices for a development task')
   .requiredOption('-t, --task <text>', 'Task instruction or prompt description')
   .requiredOption('-f, --files <globs...>', 'Target file paths or glob patterns')
@@ -30,64 +108,7 @@ program
   .option('-o, --output <file>', 'Write envelope payload to designated JSON path')
   .option('--json', 'Emit machine-readable JSON to stdout', false)
   .action(async (opts) => {
-    const isJson = Boolean(opts.json);
-
-    try {
-      const budget = Number.parseInt(opts.budget, 10);
-      if (Number.isNaN(budget)) {
-        throw new ContextPackError('INVALID_INPUT', 'Budget must be a valid integer.');
-      }
-
-      const maxSliceLines = Number.parseInt(opts.maxSliceLines, 10);
-      const minRelevance = Number.parseFloat(opts.minRelevance);
-
-      const envelope = await pack({
-        task: opts.task,
-        files: Array.isArray(opts.files) ? opts.files : [opts.files],
-        budget,
-        encoding: opts.encoding,
-        maxSliceLines,
-        minRelevance,
-        outputFile: opts.output,
-      });
-
-      if (isJson) {
-        process.stdout.write(JSON.stringify(envelope, null, 2) + '\n');
-      } else {
-        process.stdout.write(formatResult(envelope) + '\n');
-      }
-
-      process.exit(0);
-    } catch (error: any) {
-      if (error instanceof ContextPackError) {
-        const exitCode = ERROR_EXIT_CODES[error.code] ?? 1;
-        if (isJson) {
-          process.stdout.write(JSON.stringify(error.toEnvelope(), null, 2) + '\n');
-        } else {
-          process.stderr.write(pc.red(`[ERROR ${error.code}] ${error.message}\n`));
-        }
-        process.exit(exitCode);
-      }
-
-      if (isJson) {
-        process.stdout.write(
-          JSON.stringify(
-            {
-              error: {
-                code: 'INTERNAL_ERROR',
-                message: error.message || 'Unknown error occurred.',
-              },
-              metadata: { schema_version: '1.0' },
-            },
-            null,
-            2,
-          ) + '\n',
-        );
-      } else {
-        process.stderr.write(pc.red(`[INTERNAL_ERROR] ${error.message || error}\n`));
-      }
-      process.exit(1);
-    }
+    await handlePack(opts);
   });
 
 program.parse(process.argv);
