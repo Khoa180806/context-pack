@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 420" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B0F19"/>
+      <stop offset="100%" stop-color="#030712"/>
+    </linearGradient>
+
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+
+    <linearGradient id="accentCyan" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+
+    <linearGradient id="accentPurple" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#A855F7"/>
+      <stop offset="100%" stop-color="#6366F1"/>
+    </linearGradient>
+
+    <linearGradient id="accentGreen" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#34D399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+
+    <filter id="dropShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="1100" height="420" rx="24" fill="url(#bgGrad)" stroke="#1F2937" stroke-width="2"/>
+
+  <!-- Title Header -->
+  <text x="550" y="48" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="700" fill="#F8FAFC" letter-spacing="1">T02 — CONTEXT PACK ARCHITECTURE PIPELINE</text>
+  <text x="550" y="74" text-anchor="middle" font-family="ui-monospace, monospace" font-size="13" font-weight="500" fill="#94A3B8">Deterministic 4-Stage In-Memory Context Optimization &amp; Budget Enforcement</text>
+
+  <!-- Connective Data Flow Arrow Paths -->
+  <g stroke="#38BDF8" stroke-width="2.5" fill="none" opacity="0.8">
+    <!-- 1 -> 2 -->
+    <path d="M 240 220 L 290 220" stroke-dasharray="6,4"/>
+    <polygon points="296,220 286,215 286,225" fill="#38BDF8"/>
+
+    <!-- 2 -> 3 -->
+    <path d="M 500 220 L 550 220" stroke-dasharray="6,4"/>
+    <polygon points="556,220 546,215 546,225" fill="#38BDF8"/>
+
+    <!-- 3 -> 4 -->
+    <path d="M 760 220 L 810 220" stroke-dasharray="6,4"/>
+    <polygon points="816,220 806,215 806,225" fill="#38BDF8"/>
+  </g>
+
+  <!-- STAGE 1 CARD: INPUT RESOLVER -->
+  <g transform="translate(40, 110)" filter="url(#dropShadow)">
+    <rect width="200" height="230" rx="16" fill="url(#cardGrad)" stroke="#334155" stroke-width="1.5"/>
+    <rect width="200" height="6" rx="3" fill="url(#accentCyan)"/>
+    <text x="100" y="32" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="12" font-weight="700" fill="#38BDF8" letter-spacing="1.5">STAGE 1</text>
+    <text x="100" y="56" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="16" font-weight="700" fill="#F8FAFC">Input Resolver</text>
+    <line x1="20" y1="72" x2="180" y2="72" stroke="#334155" stroke-width="1"/>
+    
+    <text x="20" y="96" font-family="ui-monospace, monospace" font-size="12" fill="#E2E8F0">• Task description</text>
+    <text x="20" y="118" font-family="ui-monospace, monospace" font-size="12" fill="#E2E8F0">• Glob file patterns</text>
+    <text x="20" y="140" font-family="ui-monospace, monospace" font-size="12" fill="#94A3B8">• Fast-glob traversal</text>
+    <text x="20" y="162" font-family="ui-monospace, monospace" font-size="12" fill="#94A3B8">• Path deduplication</text>
+    <text x="20" y="184" font-family="ui-monospace, monospace" font-size="12" fill="#94A3B8">• UTF-8 parallel read</text>
+    <text x="100" y="215" text-anchor="middle" font-family="ui-monospace, monospace" font-size="11" font-weight="600" fill="#38BDF8">slicer.ts</text>
+  </g>
+
+  <!-- STAGE 2 CARD: RELEVANCE RANKER -->
+  <g transform="translate(300, 110)" filter="url(#dropShadow)">
+    <rect width="200" height="230" rx="16" fill="url(#cardGrad)" stroke="#334155" stroke-width="1.5"/>
+    <rect width="200" height="6" rx="3" fill="url(#accentPurple)"/>
+    <text x="100" y="32" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="12" font-weight="700" fill="#C084FC" letter-spacing="1.5">STAGE 2</text>
+    <text x="100" y="56" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="16" font-weight="700" fill="#F8FAFC">Relevance Ranker</text>
+    <line x1="20" y1="72" x2="180" y2="72" stroke="#334155" stroke-width="1"/>
+    
+    <text x="20" y="96" font-family="ui-monospace, monospace" font-size="12" fill="#E2E8F0">• Keyword extraction</text>
+    <text x="20" y="118" font-family="ui-monospace, monospace" font-size="12" fill="#E2E8F0">• VI/EN synonym map</text>
+    <text x="20" y="140" font-family="ui-monospace, monospace" font-size="12" fill="#94A3B8">• Term frequency calc</text>
+    <text x="20" y="162" font-family="ui-monospace, monospace" font-size="12" fill="#94A3B8">• Path match bonus</text>
+    <text x="20" y="184" font-family="ui-monospace, monospace" font-size="12" fill="#94A3B8">• Score sort (0.0–1.0)</text>
+    <text x="100" y="215" text-anchor="middle" font-family="ui-monospace, monospace" font-size="11" font-weight="600" fill="#C084FC">ranker.ts</text>
+  </g>
+
+  <!-- STAGE 3 CARD: SLICE & TOKEN BUDGET -->
+  <g transform="translate(560, 110)" filter="url(#dropShadow)">
+    <rect width="200" height="230" rx="16" fill="url(#cardGrad)" stroke="#334155" stroke-width="1.5"/>
+    <rect width="200" height="6" rx="3" fill="url(#accentCyan)"/>
+    <text x="100" y="32" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="12" font-weight="700" fill="#38BDF8" letter-spacing="1.5">STAGE 3</text>
+    <text x="100" y="56" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="16" font-weight="700" fill="#F8FAFC">Budget Packer</text>
+    <line x1="20" y1="72" x2="180" y2="72" stroke="#334155" stroke-width="1"/>
+    
+    <text x="20" y="96" font-family="ui-monospace, monospace" font-size="12" fill="#E2E8F0">• Line window slicing</text>
+    <text x="20" y="118" font-family="ui-monospace, monospace" font-size="12" fill="#E2E8F0">• js-tiktoken counter</text>
+    <text x="20" y="140" font-family="ui-monospace, monospace" font-size="12" fill="#94A3B8">• In-memory BPE cache</text>
+    <text x="20" y="162" font-family="ui-monospace, monospace" font-size="12" fill="#94A3B8">• Token ceiling clamp</text>
+    <text x="20" y="184" font-family="ui-monospace, monospace" font-size="12" fill="#94A3B8">• Truncation detection</text>
+    <text x="100" y="215" text-anchor="middle" font-family="ui-monospace, monospace" font-size="11" font-weight="600" fill="#38BDF8">packer.ts</text>
+  </g>
+
+  <!-- STAGE 4 CARD: DUAL-MODE EMITTER -->
+  <g transform="translate(820, 110)" filter="url(#dropShadow)">
+    <rect width="240" height="230" rx="16" fill="url(#cardGrad)" stroke="#059669" stroke-width="1.5"/>
+    <rect width="240" height="6" rx="3" fill="url(#accentGreen)"/>
+    <text x="120" y="32" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="12" font-weight="700" fill="#34D399" letter-spacing="1.5">STAGE 4 (OUTPUT)</text>
+    <text x="120" y="56" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="16" font-weight="700" fill="#F8FAFC">Artifact Emitter</text>
+    <line x1="20" y1="72" x2="220" y2="72" stroke="#334155" stroke-width="1"/>
+    
+    <text x="20" y="96" font-family="ui-monospace, monospace" font-size="12" fill="#E2E8F0">• Human Terminal (ANSI)</text>
+    <text x="20" y="118" font-family="ui-monospace, monospace" font-size="12" fill="#E2E8F0">• JSON API Envelope</text>
+    <text x="20" y="140" font-family="ui-monospace, monospace" font-size="12" fill="#94A3B8">• schema_version: "1.0"</text>
+    <text x="20" y="162" font-family="ui-monospace, monospace" font-size="12" fill="#94A3B8">• Exit codes: 0, 1, 2, 3</text>
+    <text x="20" y="184" font-family="ui-monospace, monospace" font-size="12" fill="#94A3B8">• Zero network calls (D-009)</text>
+    <text x="120" y="215" text-anchor="middle" font-family="ui-monospace, monospace" font-size="11" font-weight="600" fill="#34D399">cli.ts / formatter.ts</text>
+  </g>
+
+  <!-- Footer Stats Ribbon -->
+  <g transform="translate(40, 360)">
+    <rect width="1020" height="40" rx="10" fill="#111827" stroke="#1F2937" stroke-width="1"/>
+    <text x="170" y="25" text-anchor="middle" font-family="ui-monospace, monospace" font-size="12" fill="#94A3B8">RAM Cache: <tspan fill="#34D399" font-weight="700">&lt;40MB</tspan></text>
+    <text x="430" y="25" text-anchor="middle" font-family="ui-monospace, monospace" font-size="12" fill="#94A3B8">Latency: <tspan fill="#38BDF8" font-weight="700">&lt;25ms local</tspan></text>
+    <text x="700" y="25" text-anchor="middle" font-family="ui-monospace, monospace" font-size="12" fill="#94A3B8">Token Savings: <tspan fill="#34D399" font-weight="700">-75.2% (D-011)</tspan></text>
+    <text x="930" y="25" text-anchor="middle" font-family="ui-monospace, monospace" font-size="12" fill="#94A3B8">Network: <tspan fill="#F59E0B" font-weight="700">0 KB (Local)</tspan></text>
+  </g>
+</svg>
