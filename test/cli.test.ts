@@ -1,0 +1,130 @@
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { fork } from 'node:child_process';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+
+const tsxLoaderPath = path.resolve('node_modules/tsx/dist/loader.mjs');
+const cliScriptPath = path.resolve('src/cli.ts');
+const fixtureDir = path.resolve('test/__cli_fixtures__');
+
+interface CliResult {
+  stdout: string;
+  stderr: string;
+  exitCode: number | null;
+}
+
+function runCli(args: string[]): Promise<CliResult> {
+  return new Promise((resolve) => {
+    const child = fork(cliScriptPath, args, {
+      stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
+      execArgv: ['--import', 'tsx'],
+    });
+
+    let stdout = '';
+    let stderr = '';
+
+    child.stdout?.on('data', (data) => {
+      stdout += data.toString();
+    });
+
+    child.stderr?.on('data', (data) => {
+      stderr += data.toString();
+    });
+
+    child.on('close', (code) => {
+      resolve({ stdout, stderr, exitCode: code });
+    });
+  });
+}
+
+describe('CLI Integration Tests', () => {
+  beforeAll(() => {
+    if (!fs.existsSync(fixtureDir)) {
+      fs.mkdirSync(fixtureDir, { recursive: true });
+    }
+    fs.writeFileSync(
+      path.join(fixtureDir, 'UserService.ts'),
+      'export class UserService { login() { return true; } }',
+      'utf-8',
+    );
+  });
+
+  afterAll(() => {
+    if (fs.existsSync(fixtureDir)) {
+      fs.rmSync(fixtureDir, { recursive: true, force: true });
+    }
+  });
+
+  it('exits with code 0 on --help', async () => {
+    const res = await runCli(['--help']);
+    expect(res.exitCode).toBe(0);
+    expect(res.stdout).toContain('context-pack');
+  });
+
+  it('exits with code 0 on --version', async () => {
+    const res = await runCli(['--version']);
+    expect(res.exitCode).toBe(0);
+    expect(res.stdout).toContain('0.1.0');
+  });
+
+  it('fails with exit code 2 when required options are missing', async () => {
+    const res = await runCli(['pack']);
+    expect(res.exitCode).toBe(2);
+    expect(res.stderr).toContain("required option '-t, --task <text>' not specified");
+  });
+
+  it('packs context and outputs human-readable report by default', async () => {
+    const targetFile = path.join(fixtureDir, 'UserService.ts');
+    const res = await runCli([
+      'pack',
+      '--task',
+      'Fix user login logic',
+      '--files',
+      targetFile,
+      '--budget',
+      '1000',
+    ]);
+
+    expect(res.exitCode).toBe(0);
+    expect(res.stdout).toContain('Context Pack — T02');
+    expect(res.stdout).toContain('UserService.ts');
+    expect(res.stdout).toContain('Total:');
+  });
+
+  it('outputs valid JSON envelope with --json flag', async () => {
+    const targetFile = path.join(fixtureDir, 'UserService.ts');
+    const res = await runCli([
+      'pack',
+      '--task',
+      'Fix user login logic',
+      '--files',
+      targetFile,
+      '--budget',
+      '1000',
+      '--json',
+    ]);
+
+    expect(res.exitCode).toBe(0);
+    const parsed = JSON.parse(res.stdout.trim());
+    expect(parsed.metadata.schema_version).toBe('1.0');
+    expect(parsed.metadata.source).toBe('context-pack');
+    expect(parsed.data.task).toBe('Fix user login logic');
+    expect(parsed.data.slices.length).toBeGreaterThan(0);
+  });
+
+  it('outputs JSON error envelope and non-zero exit code on domain error', async () => {
+    const res = await runCli([
+      'pack',
+      '--task',
+      'Test error',
+      '--files',
+      'non_existent_folder/**/*.ts',
+      '--json',
+    ]);
+
+    expect(res.exitCode).toBe(3); // NOT_FOUND / NO_FILES_MATCHED -> 3
+    const parsed = JSON.parse(res.stdout.trim());
+    expect(parsed.error.code).toBe('NO_FILES_MATCHED');
+    expect(parsed.metadata.schema_version).toBe('1.0');
+  });
+});
