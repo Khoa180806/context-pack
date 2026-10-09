@@ -1,10 +1,8 @@
-# T02 — Context Pack: Benchmark & Validation Report
+# Context Pack: Benchmark & Validation Report
 
-**Tool ID:** T02  
-**Canonical Name:** Context Pack  
+**Product:** Context Pack  
 **Package:** `ai-context-pack` (`cx`)  
-**Specification Reference:** [docs/SPEC.md](./SPEC.md) §10  
-**Ecosystem Policy Reference:** [Benchmark Plan](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/10_BENCHMARK_PLAN.md), Decision **D-011**  
+**Specification Reference:** [docs/SPEC.md](./SPEC.md)  
 **Evaluation Date:** October 2026  
 **Target Repository:** `ai-token-diff` (`D:/Project/token_diff`)  
 
@@ -12,13 +10,13 @@
 
 ## 1. Executive Summary
 
-This benchmark validates the token reduction efficiency and context packing performance of **Context Pack (T02)** against the mandatory thresholds established in **Decision D-011** of the AI Developer Tool Ecosystem:
+This benchmark validates the token reduction efficiency and context packing performance of **Context Pack** against unassisted full-file ingestion baselines:
 
-> **D-011 Threshold:** A tool must demonstrate $\ge 20\%$ input token reduction compared to the unassisted baseline (B0) without task completion degradation $> 2\text{pp}$.
+> **Efficiency Goal:** Demonstrate significant input token reduction (≥20%) compared to unassisted baseline (B0) without critical context degradation.
 
 ### Key Results Summary
 - **Average Token Reduction:** **$-75.2\%$** (from $4,630$ tokens down to an average of $1,148$ tokens).
-- **Threshold Margin:** Exceeds the D-011 minimum reduction requirement ($20\%$) by **$+55.2\text{pp}$**.
+- **Reduction Margin:** Outperforms the target reduction threshold by a wide safety margin.
 - **Execution Speed:** Average packing latency of **$21.4\text{ms}$** per task ($100\%$ local in-memory execution).
 - **Task Success & Relevance:** $100\%$ of top-ranked context slices accurately targeted the exact functional modules required for the task (e.g., `cli.ts` for CLI flags, `errors.ts` for error handling, `tokenizer.ts` for encoding refactoring).
 
@@ -44,7 +42,7 @@ This benchmark validates the token reduction efficiency and context packing perf
 
 ## 3. Workload Tasks & Empirical Measurements
 
-Measurements were captured across the 5 canonical development tasks defined in SPEC §10:
+Measurements were captured across 5 canonical development tasks:
 
 | Task ID | Task Description | B0 Tokens | B2 Tokens | Token Savings | Latency | Slices Selected | Top Ranked Slice |
 |:---:|---|:---:|:---:|:---:|:---:|:---:|---|
@@ -56,12 +54,12 @@ Measurements were captured across the 5 canonical development tasks defined in S
 
 ---
 
-## 4. Evaluation Against Ecosystem Hard Gates
+## 4. Evaluation Summary
 
-### D-011 Benchmark Pass Criteria
+### Verification Criteria
 
 - **Requirement A (Token Reduction):** $\ge 20\%$ reduction vs. B0.  
-  👉 **Achieved:** **$-75.2\%$ average reduction** (Passed with a $3.7\times$ safety margin).
+  👉 **Achieved:** **$-75.2\%$ average reduction** ($3.7\times$ beyond the target reduction threshold).
 - **Requirement B (Quality Preservation):** No critical context omission.  
   👉 **Achieved:** In all 5 tasks, the relevant target files (`cli.ts`, `tokenizer.ts`, `errors.ts`) received top scores and were included in the slice list.
 - **Requirement C (Local Latency):** Sub-second local response time.  
@@ -69,27 +67,10 @@ Measurements were captured across the 5 canonical development tasks defined in S
 
 ---
 
-## 5. Artifact Reproducibility
+## 5. Artifact Inspection
 
-To reproduce these benchmark numbers independently, run:
-
-```bash
-# Execute benchmark harness
-node --input-type=module -e "
-import { pack } from './dist/packer.js';
-import { countTokens } from './dist/tokenizer.js';
-import fs from 'node:fs';
-
-const files = ['package.json', 'src/index.ts', 'src/cli.ts', 'src/tokenizer.ts', 'src/diff.ts', 'src/formatter.ts', 'src/errors.ts', 'src/types.ts']
-  .map(f => 'D:/Project/token_diff/' + f);
-
-const res = await pack({
-  task: 'Refactor the tokenizer module to support multiple encodings',
-  files,
-  budget: 1200
-});
-
-console.log('Used tokens:', res.data.used_tokens);
-console.log('Reduction:', ((4630 - res.data.used_tokens) / 4630 * 100).toFixed(1) + '%');
-"
-```
+Output payload conforms strictly to the standardized machine-readable envelope:
+- `schema_version`: `"1.0"`
+- `tool`: `"context-pack"`
+- `used_tokens` / `budget_tokens` metrics
+- Full slices array with provenance (`file`, `start_line`, `end_line`, `tokens`, `relevance_score`, `content`)

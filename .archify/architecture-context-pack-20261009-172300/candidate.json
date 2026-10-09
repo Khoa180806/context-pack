@@ -196,10 +196,10 @@
     },
     {
       "dot": "amber",
-      "title": "D-011 Standard Transport Envelope",
+      "title": "Deterministic Transport Envelope",
       "items": [
         "Consistent metadata payload: schema_version, duration_ms, truncation flags",
-        "Seamless interop with ToolsEcosystem AI agent orchestration pipelines"
+        "Seamless interop with autonomous AI coding agents (Cursor, Claude Code, Copilot)"
       ]
     }
   ]

@@ -1,13 +1,9 @@
-# T02 — Context Pack: Technical Specification
+# Context Pack: Technical Specification
 
-**Canonical ID:** T02  
-**Canonical Name:** Context Pack  
+**Product Name:** Context Pack  
 **npm Package:** `ai-context-pack`  
-**CLI Binaries:** `context-pack`, `ai-context-pack`, `cp-tool`  
-**Level:** 1★  
-**Status:** Stable  
-**Time-Box:** 1–2 weeks (~10–20 builder hours)  
-**Applicable Decisions:** D-001, D-003, D-008, D-009, D-011, D-019, D-021, D-023 (see [Decision Log](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/11_DECISION_LOG.md))
+**CLI Binaries:** `cx`, `cpack`, `context-pack`, `ai-context-pack`  
+**Status:** Stable (Production Ready)  
 
 ---
 
@@ -30,9 +26,9 @@ Developers and software engineers using autonomous AI coding agents (e.g., Curso
 
 ### Success Criteria
 
-- Reduces total prompt context token consumption by ≥20% compared to full-file ingestion baselines while maintaining task completion within a 2 percentage point margin (D-011 in [Decision Log](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/11_DECISION_LOG.md)).
-- Produces a machine-readable transport envelope conforming strictly to [Integration Spec](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/05_INTEGRATION_SPEC.md).
-- Operates 100% locally with zero external network transmission of proprietary source code (D-009).
+- Reduces total prompt context token consumption by ≥20% compared to full-file ingestion baselines while maintaining task completion within a 2 percentage point margin.
+- Produces a machine-readable transport envelope conforming strictly to standardized agent JSON contracts.
+- Operates 100% locally with zero external network transmission of proprietary source code.
 
 ---
 
@@ -49,7 +45,7 @@ Developers and software engineers using autonomous AI coding agents (e.g., Curso
 | ContextPack JSON Artifact | Emits standard envelopes consumed programmatically by agents and pipelines |
 | CLI Interface | `context-pack pack`, supporting `--task`, `--files`, `--budget`, `--json`, `--output` |
 | SDK / Library API | Exports typed programmatic entry points `pack(options): Promise<ContextPackEnvelope>` |
-| Ecosystem Composition | Composes with `token-diff` (`ai-token-diff`) for deterministic before/after verification |
+| Tool Composition | Composes seamlessly with `token-diff` (`ai-token-diff`) for deterministic before/after verification |
 
 ### Out of Scope (1★ MVP)
 
@@ -80,7 +76,7 @@ export interface PackOptions {
 
 ### Output: `ContextPackEnvelope`
 
-Conforms to the standardized envelope specification in [Integration Spec](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/05_INTEGRATION_SPEC.md).
+Conforms to the standardized machine-readable envelope specification:
 
 ```typescript
 export interface ContextSlice {
@@ -160,7 +156,7 @@ context-pack pack --task "Fix auth bug" --files src/ --output context.pack.json
 
 ### Exit Codes
 
-Conforms to [Integration Spec](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/05_INTEGRATION_SPEC.md):
+Deterministic process exit codes:
 
 | Exit Code | Identifier | Description |
 |---|---|---|
@@ -174,7 +170,7 @@ Conforms to [Integration Spec](https://github.com/Khoa180806/AI_Developer_Tool_E
 ### Terminal Output Preview (Human-Readable)
 
 ```text
-Context Pack — T02
+Context Pack
 Task: Fix the authentication bug in UserService
 Budget: 4000 tokens
 
@@ -292,7 +288,7 @@ export class ContextPackError extends Error {
 
 ## 10. Benchmark & Validation Plan
 
-Aligned with [Benchmark Plan](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/10_BENCHMARK_PLAN.md).
+See empirical evaluation report in [BENCHMARK_RESULTS.md](./BENCHMARK_RESULTS.md).
 
 ### Baselines
 
@@ -300,7 +296,7 @@ Aligned with [Benchmark Plan](https://github.com/Khoa180806/AI_Developer_Tool_Ec
 |---|---|
 | B0 (Unassisted) | Full-file ingestion without ranking or windowing |
 | B1 (Raw Glob) | File-level ingestion matching globs without token budget enforcement |
-| B2 (Ecosystem Prototype) | `ai-context-pack` with budget constraint (4,000 tokens) |
+| B2 (Context Pack) | `ai-context-pack` with budget constraint and greedy knapsack slicing |
 
 ### Test Workload (5 Benchmark Tasks)
 
@@ -323,26 +319,23 @@ Aligned with [Benchmark Plan](https://github.com/Khoa180806/AI_Developer_Tool_Ec
 
 ---
 
-## 11. Post-MVP Roadmap
+## 11. Roadmap
 
 | Phase | Milestone | Focus |
 |---|---|---|
-| v0.2 | MCP Adapter | Expose tool endpoint for agent orchestration |
-| v0.3 | Local Embeddings | Semantic embedding similarity fallback |
-| v0.4 | Pipeline Composition | Native composition with T03 Tool Result Compressor |
-| v1.0 | 1★ Stable Promotion | Full verification against [Tool Lifecycle](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/04_TOOL_LIFECYCLE.md) |
+| v0.2 | MCP Adapter | Expose Model Context Protocol endpoint for agent orchestration |
+| v0.3 | Local Embeddings | Optional fast semantic embedding similarity fallback |
+| v0.4 | Pipeline Composition | Native composition with output stream compressors |
+| v1.0 | Long-Term Stable | Enterprise features, AST parser support |
 
 ---
 
-## 12. 1★ Stable Promotion Checklist
+## 12. Quality & Release Checklist
 
-- [x] Standalone CLI and SDK interfaces functional
-- [x] Canonical naming and ID verified against [Tool Catalog](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/03_TOOL_CATALOG.md)
-- [x] Envelope payload verified against [Integration Spec](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/05_INTEGRATION_SPEC.md)
+- [x] Standalone CLI (`cx`, `cpack`, `context-pack`) and SDK interfaces functional
+- [x] Standard transport envelope payload verified
 - [x] 100% unit and integration test pass rate (42/42 tests passed)
 - [x] Benchmark results documented with measurable token savings (-75.2% average reduction)
-- [x] Documented error states and failure modes
-- [x] Security boundaries audited (local-first in-memory execution)
-- [x] Update [Tool Catalog](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/03_TOOL_CATALOG.md) status to `Stable`
-- [x] Update [Roadmap](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/06_ROADMAP.md)
-- [x] Record promotion in [Changelog](https://github.com/Khoa180806/AI_Developer_Tool_Ecosystem/tree/master/docs/CHANGELOG.md)
+- [x] Documented error states, failure modes, and deterministic exit codes
+- [x] Security boundaries audited (100% local-first in-memory execution, zero telemetry)
+- [x] CI/CD multi-OS and multi-Node test matrix established

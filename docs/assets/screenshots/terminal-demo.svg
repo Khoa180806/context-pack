@@ -72,7 +72,7 @@
 
       <!-- Line 1: Header (bold cyan) -->
       <text x="0" y="58">
-        <tspan class="text-cyan-bold">Context Pack — T02</tspan>
+        <tspan class="text-cyan-bold">Context Pack</tspan>
       </text>
 
       <!-- Line 2: Task -->

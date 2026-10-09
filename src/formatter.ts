@@ -11,7 +11,7 @@ export function formatResult(envelope: ContextPackEnvelope): string {
   const lines: string[] = [];
 
   // Header section
-  lines.push(pc.bold(pc.cyan('Context Pack — T02')));
+  lines.push(pc.bold(pc.cyan('Context Pack')));
   lines.push(`${pc.bold('Task:')} ${data.task}`);
   lines.push(`${pc.bold('Budget:')} ${data.budget_tokens} tokens\n`);
 

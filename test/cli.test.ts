@@ -84,7 +84,7 @@ describe('CLI Integration Tests', () => {
     ]);
 
     expect(res.exitCode).toBe(0);
-    expect(res.stdout).toContain('Context Pack — T02');
+    expect(res.stdout).toContain('Context Pack');
     expect(res.stdout).toContain('UserService.ts');
     expect(res.stdout).toContain('Total:');
   });
@@ -102,7 +102,7 @@ describe('CLI Integration Tests', () => {
     ]);
 
     expect(res.exitCode).toBe(0);
-    expect(res.stdout).toContain('Context Pack — T02');
+    expect(res.stdout).toContain('Context Pack');
     expect(res.stdout).toContain('UserService.ts');
     expect(res.stdout).toContain('Total:');
   });

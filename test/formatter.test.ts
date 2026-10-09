@@ -51,7 +51,7 @@ describe('formatResult', () => {
     const rawOutput = formatResult(sampleEnvelope);
     const output = stripAnsi(rawOutput);
 
-    expect(output).toContain('Context Pack — T02');
+    expect(output).toContain('Context Pack');
     expect(output).toContain('Task: Fix authentication bug in UserService');
     expect(output).toContain('Budget: 4000 tokens');
   });

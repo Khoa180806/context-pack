@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "receiptId": "32e75689-047e-4d71-9d2b-0f279a1088eb",
+  "receiptId": "d4418e84-d24f-4640-9566-79eed96b4745",
   "status": "current",
   "command": "deliver",
   "type": "architecture",
   "input": "D:\\Project\\context_pack\\.archify\\architecture-context-pack-20261009-172300\\candidate.json",
   "output": "D:\\Project\\context_pack\\.archify\\architecture-context-pack-20261009-172300\\context-pack.html",
   "specification": {
-    "sha256": "9b887ccded3947ae9847ede77b77d9802c4536a8fc78e1cafacc4703adf1b19b",
-    "bytes": 5000
+    "sha256": "ab6707964a93a627151ae8c2effbf3baae5b7a4a56f64f6ed9f688d1eb1f9a2a",
+    "bytes": 5010
   },
   "artifact": {
-    "sha256": "965099a37f9b184285130e3c0906a431bc3866349e212e980bd5d2ccba109772",
-    "bytes": 759189
+    "sha256": "928a27ae77527475a8a51d19b193de7d50d4482dcce492943157697fc5109cf3",
+    "bytes": 759199
   }
 }
