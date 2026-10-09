@@ -1,0 +1,206 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Context Pack System Architecture",
+    "output": ".archify/architecture-context-pack-20261009-172300/context-pack.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/Khoa180806/context-pack",
+      "provider": "github",
+      "revision": "528593cdded97fde80d088c6f91d71821c8bebe0"
+    }
+  },
+  "components": [
+    {
+      "id": "cli",
+      "type": "external",
+      "label": "CLI Interface",
+      "sublabel": "Commander :cx :cpack",
+      "tag": "User / Agent Call",
+      "pos": [60, 80],
+      "size": [160, 64],
+      "sources": [
+        {
+          "path": "src/cli.ts",
+          "line": 10,
+          "end_line": 38,
+          "label": "CLI Handler"
+        }
+      ]
+    },
+    {
+      "id": "resolver",
+      "type": "backend",
+      "label": "Input Resolver",
+      "sublabel": "Fast-Glob & FS Reader",
+      "tag": "File Ingestion",
+      "pos": [350, 80],
+      "size": [170, 64],
+      "sources": [
+        {
+          "path": "src/packer.ts",
+          "line": 40,
+          "end_line": 65,
+          "label": "Glob Ingestion"
+        }
+      ]
+    },
+    {
+      "id": "ranker",
+      "type": "backend",
+      "label": "Relevance Ranker",
+      "sublabel": "BM25 + Semantic Weights",
+      "tag": "Relevance Scoring",
+      "pos": [640, 80],
+      "size": [170, 64],
+      "sources": [
+        {
+          "path": "src/ranker.ts",
+          "line": 14,
+          "end_line": 52,
+          "label": "BM25 Ranking"
+        }
+      ]
+    },
+    {
+      "id": "tokenizer",
+      "type": "backend",
+      "label": "Tokenizer Engine",
+      "sublabel": "js-tiktoken Pure JS",
+      "tag": "Deterministic BPE",
+      "pos": [350, 240],
+      "size": [170, 64],
+      "sources": [
+        {
+          "path": "src/tokenizer.ts",
+          "line": 10,
+          "end_line": 30,
+          "label": "BPE Tokenizer"
+        }
+      ]
+    },
+    {
+      "id": "packer",
+      "type": "backend",
+      "label": "Budget Packer",
+      "sublabel": "Greedy Knapsack Slicer",
+      "tag": "Token Budget Gate",
+      "pos": [640, 240],
+      "size": [170, 64],
+      "sources": [
+        {
+          "path": "src/packer.ts",
+          "line": 66,
+          "end_line": 90,
+          "label": "Knapsack Slicing"
+        }
+      ]
+    },
+    {
+      "id": "terminal_fmt",
+      "type": "external",
+      "label": "Terminal Output",
+      "sublabel": "Picocolors ANSI Printer",
+      "tag": "Human Inspection",
+      "pos": [920, 80],
+      "size": [160, 64],
+      "sources": [
+        {
+          "path": "src/formatter.ts",
+          "line": 9,
+          "end_line": 35,
+          "label": "ANSI Terminal Formatter"
+        }
+      ]
+    },
+    {
+      "id": "json_envelope",
+      "type": "external",
+      "label": "JSON Envelope",
+      "sublabel": "D-011 Common Transport",
+      "tag": "Agent Automation",
+      "pos": [920, 240],
+      "size": [160, 64],
+      "sources": [
+        {
+          "path": "src/types.ts",
+          "line": 10,
+          "end_line": 40,
+          "label": "ContextPackEnvelope Type"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Deterministic In-Memory Core Pipeline",
+      "wraps": ["resolver", "ranker", "tokenizer", "packer"]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cli-to-resolver",
+      "from": "cli",
+      "to": "resolver",
+      "label": "task + file patterns"
+    },
+    {
+      "id": "resolver-to-ranker",
+      "from": "resolver",
+      "to": "ranker",
+      "label": "file AST slices"
+    },
+    {
+      "id": "ranker-to-packer",
+      "from": "ranker",
+      "to": "packer",
+      "label": "ranked slice candidates"
+    },
+    {
+      "id": "tokenizer-to-packer",
+      "from": "tokenizer",
+      "to": "packer",
+      "label": "exact token counts"
+    },
+    {
+      "id": "packer-to-terminal",
+      "from": "packer",
+      "to": "terminal_fmt",
+      "label": "human ANSI view"
+    },
+    {
+      "id": "packer-to-envelope",
+      "from": "packer",
+      "to": "json_envelope",
+      "label": "structured JSON payload"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Deterministic Knapsack Packing",
+      "items": [
+        "Selects highest-relevance slices while staying strictly within the token budget",
+        "Deterministic tie-breaking ensures identical output across identical inputs"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Pure JS BPE Tokenizer",
+      "items": [
+        "Built on js-tiktoken without native node-gyp or WASM binaries",
+        "Supports cl100k_base, o200k_base, p50k_base, and r50k_base encodings"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "D-011 Standard Transport Envelope",
+      "items": [
+        "Consistent metadata payload: schema_version, duration_ms, truncation flags",
+        "Seamless interop with ToolsEcosystem AI agent orchestration pipelines"
+      ]
+    }
+  ]
+}

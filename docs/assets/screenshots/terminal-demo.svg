@@ -1,181 +1,129 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 480" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 380" width="100%" height="100%">
   <defs>
-    <!-- Window drop shadow -->
     <filter id="win-shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
-      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#000000" flood-opacity="0.6"/>
-      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#0284c7" flood-opacity="0.15"/>
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#000000" flood-opacity="0.65"/>
     </filter>
-    
-    <!-- Linear Gradients -->
     <linearGradient id="term-header" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#141824"/>
-      <stop offset="100%" stop-color="#1e2436"/>
+      <stop offset="0%" stop-color="#181825"/>
+      <stop offset="100%" stop-color="#1e1e2e"/>
     </linearGradient>
     <linearGradient id="term-border" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.4"/>
-      <stop offset="50%" stop-color="#334155" stop-opacity="0.3"/>
-      <stop offset="100%" stop-color="#0f172a" stop-opacity="0.6"/>
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#313244" stop-opacity="0.4"/>
     </linearGradient>
-    <linearGradient id="tag-badge" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#0284c7"/>
-      <stop offset="100%" stop-color="#6366f1"/>
-    </linearGradient>
-    <linearGradient id="bar-fill" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#38bdf8"/>
-      <stop offset="70%" stop-color="#818cf8"/>
-      <stop offset="100%" stop-color="#f59e0b"/>
-    </linearGradient>
-
     <style>
-      .term-text { font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace; }
-      .prompt { fill: #38bdf8; font-weight: 700; }
-      .cmd { fill: #f8fafc; font-weight: 600; }
-      .arg-flag { fill: #a855f7; }
-      .arg-val { fill: #38bdf8; }
-      .brand-title { fill: #00f2fe; font-weight: 700; letter-spacing: 0.5px; }
-      .brand-sub { fill: #64748b; font-size: 13px; }
-      .label-dim { fill: #94a3b8; }
-      .label-val { fill: #f1f5f9; font-weight: 500; }
-      .check-sym { fill: #10b981; font-weight: bold; }
-      .file-path { fill: #f8fafc; font-weight: 600; }
-      .line-range { fill: #64748b; }
-      .tok-badge { fill: #38bdf8; font-weight: 600; }
-      .score-badge { fill: #a78bfa; }
-      .stat-strong { fill: #f8fafc; font-weight: 700; }
-      .stat-highlight { fill: #38bdf8; font-weight: 700; }
-      .tag-trunc { fill: #fbbf24; font-weight: 800; font-size: 11px; }
+      .term-code {
+        font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'Menlo', 'Consolas', monospace;
+        font-size: 14px;
+        line-height: 22px;
+      }
+      .prompt { fill: #a6adc8; }
+      .cmd-main { fill: #89b4fa; font-weight: bold; }
+      .flag { fill: #cba6f7; }
+      .flag-val { fill: #a6e3a1; }
+      .text-cyan-bold { fill: #00f2fe; font-weight: bold; }
+      .text-bold { fill: #cdd6f4; font-weight: bold; }
+      .text-normal { fill: #cdd6f4; }
+      .text-green { fill: #a6e3a1; font-weight: bold; }
+      .text-dim { fill: #6c7086; }
+      .text-blue { fill: #89b4fa; }
+      .text-yellow { fill: #f9e2af; font-weight: bold; }
     </style>
   </defs>
 
-  <!-- Background Canvas -->
-  <rect width="880" height="480" fill="#080b11"/>
-
-  <!-- Subtle ambient glow -->
-  <circle cx="200" cy="140" r="180" fill="#0284c7" opacity="0.08" filter="blur(60px)"/>
-  <circle cx="700" cy="340" r="160" fill="#6366f1" opacity="0.07" filter="blur(60px)"/>
+  <!-- Canvas Background -->
+  <rect width="880" height="380" fill="#11111b"/>
 
   <!-- Terminal Window Shell -->
-  <g transform="translate(40, 30)" filter="url(#win-shadow)">
-    <!-- Window Border & Body -->
-    <rect width="800" height="420" rx="12" fill="#0b0f19" stroke="url(#term-border)" stroke-width="1.5"/>
+  <g transform="translate(40, 24)" filter="url(#win-shadow)">
+    <!-- Window Frame -->
+    <rect width="800" height="330" rx="10" fill="#1e1e2e" stroke="url(#term-border)" stroke-width="1.5"/>
 
-    <!-- Terminal Titlebar -->
-    <path d="M 0,12 C 0,5.37 5.37,0 12,0 L 788,0 C 794.63,0 800,5.37 800,12 L 800,42 L 0,42 Z" fill="url(#term-header)"/>
-    <line x1="0" y1="42" x2="800" y2="42" stroke="#1e293b" stroke-width="1"/>
+    <!-- Titlebar -->
+    <path d="M 0,10 C 0,4.48 4.48,0 10,0 L 790,0 C 795.52,0 800,4.48 800,10 L 800,38 L 0,38 Z" fill="url(#term-header)"/>
+    <line x1="0" y1="38" x2="800" y2="38" stroke="#313244" stroke-width="1"/>
 
-    <!-- Window Controls -->
-    <circle cx="24" cy="21" r="6" fill="#ef4444"/>
-    <circle cx="44" cy="21" r="6" fill="#f59e0b"/>
-    <circle cx="64" cy="21" r="6" fill="#10b981"/>
+    <!-- Window Dots -->
+    <circle cx="22" cy="19" r="6" fill="#f38ba8"/>
+    <circle cx="42" cy="19" r="6" fill="#f9e2af"/>
+    <circle cx="62" cy="19" r="6" fill="#a6e3a1"/>
 
     <!-- Window Title -->
-    <text class="term-text" x="400" y="26" text-anchor="middle" font-size="12" fill="#64748b" font-weight="500">
-      bash — cx · context-pack v0.1.0
+    <text class="term-code" x="400" y="24" text-anchor="middle" font-size="12" fill="#a6adc8">
+      terminal — cx -t "Fix token count logic..."
     </text>
 
     <!-- Terminal Content Area -->
-    <g transform="translate(32, 75)" class="term-text" font-size="13">
-      
-      <!-- Command Line Prompt -->
-      <g>
-        <text x="0" y="0">
-          <tspan class="prompt">$ </tspan>
-          <tspan class="cmd">cx </tspan>
-          <tspan class="arg-flag">-t </tspan>
-          <tspan class="arg-val">"Fix token count logic and encoding validation" \</tspan>
-        </text>
-        <text x="20" y="24">
-          <tspan class="arg-flag">-f </tspan>
-          <tspan fill="#e2e8f0">"src/tokenizer.ts" "src/errors.ts" "src/packer.ts" </tspan>
-          <tspan class="arg-flag">-b </tspan>
-          <tspan fill="#fbbf24" font-weight="700">1000</tspan>
-        </text>
-      </g>
+    <g transform="translate(28, 68)" class="term-code">
+      <!-- Command prompt line -->
+      <text x="0" y="0">
+        <tspan class="prompt">$ </tspan>
+        <tspan class="cmd-main">cx </tspan>
+        <tspan class="flag">-t </tspan>
+        <tspan class="flag-val">"Fix token count logic and encoding validation" </tspan>
+        <tspan class="flag">-f </tspan>
+        <tspan class="flag-val">"src/tokenizer.ts" "src/errors.ts" "src/packer.ts" </tspan>
+        <tspan class="flag">-b </tspan>
+        <tspan fill="#fab387">1000</tspan>
+      </text>
 
-      <!-- Horizontal separator -->
-      <line x1="0" y1="46" x2="736" y2="46" stroke="#1e293b" stroke-width="1" stroke-dasharray="4 4"/>
+      <!-- Blank line -->
+      <!-- Line 1: Header (bold cyan) -->
+      <text x="0" y="32">
+        <tspan class="text-cyan-bold">Context Pack — T02</tspan>
+      </text>
 
-      <!-- Header Output -->
-      <g transform="translate(0, 72)">
-        <text x="0" y="0" font-size="15">
-          <tspan class="brand-title">Context Pack</tspan>
-          <tspan fill="#475569"> — </tspan>
-          <tspan fill="#94a3b8" font-size="13" font-weight="600">T02 Token-Budget Packer</tspan>
-        </text>
-        <text x="0" y="24" font-size="13">
-          <tspan class="label-dim">Task: </tspan>
-          <tspan class="label-val">Fix token count logic and encoding validation</tspan>
-        </text>
-        <text x="0" y="46" font-size="13">
-          <tspan class="label-dim">Budget: </tspan>
-          <tspan fill="#38bdf8" font-weight="700">1,000</tspan>
-          <tspan class="label-dim"> tokens (o200k_base cl100k)</tspan>
-        </text>
-      </g>
+      <!-- Line 2: Task -->
+      <text x="0" y="54">
+        <tspan class="text-bold">Task: </tspan>
+        <tspan class="text-normal">Fix token count logic and encoding validation</tspan>
+      </text>
 
-      <!-- File Slices List -->
-      <g transform="translate(0, 154)">
-        <!-- File Slice 1 -->
-        <g>
-          <rect x="-8" y="-16" width="752" height="30" rx="6" fill="#0f172a" fill-opacity="0.6"/>
-          <text x="4" y="4">
-            <tspan class="check-sym">✓ </tspan>
-            <tspan class="file-path">src/tokenizer.ts </tspan>
-            <tspan class="line-range">(lines 1–32) </tspan>
-          </text>
-          <text x="460" y="4" text-anchor="start">
-            <tspan class="tok-badge">244 tokens</tspan>
-            <tspan class="label-dim">   score: </tspan>
-            <tspan class="score-badge">0.70</tspan>
-          </text>
-        </g>
+      <!-- Line 3: Budget -->
+      <text x="0" y="76">
+        <tspan class="text-bold">Budget: </tspan>
+        <tspan class="text-normal">1000 tokens</tspan>
+      </text>
 
-        <!-- File Slice 2 -->
-        <g transform="translate(0, 36)">
-          <rect x="-8" y="-16" width="752" height="30" rx="6" fill="#0f172a" fill-opacity="0.6"/>
-          <text x="4" y="4">
-            <tspan class="check-sym">✓ </tspan>
-            <tspan class="file-path">src/packer.ts </tspan>
-            <tspan class="line-range">(lines 1–100) </tspan>
-          </text>
-          <text x="460" y="4" text-anchor="start">
-            <tspan class="tok-badge">709 tokens</tspan>
-            <tspan class="label-dim">   score: </tspan>
-            <tspan class="score-badge">0.65</tspan>
-          </text>
-        </g>
-      </g>
+      <!-- Blank line -->
+      <!-- Line 4: Slice 1 -->
+      <text x="0" y="120">
+        <tspan>  </tspan>
+        <tspan class="text-green">✓</tspan>
+        <tspan> </tspan>
+        <tspan class="text-bold">src/tokenizer.ts</tspan>
+        <tspan> </tspan>
+        <tspan class="text-dim">(lines 1–32)</tspan>
+        <tspan>  </tspan>
+        <tspan class="text-blue">244 tokens</tspan>
+        <tspan>  </tspan>
+        <tspan class="text-dim">score: 0.70</tspan>
+      </text>
 
-      <!-- Token Budget Meter Bar -->
-      <g transform="translate(0, 244)">
-        <rect x="0" y="0" width="736" height="8" rx="4" fill="#1e293b"/>
-        <rect x="0" y="0" width="701" height="8" rx="4" fill="url(#bar-fill)"/>
-        <!-- 953 / 1000 = 95.3% of 736 = 701px -->
-      </g>
+      <!-- Line 5: Slice 2 -->
+      <text x="0" y="144">
+        <tspan>  </tspan>
+        <tspan class="text-green">✓</tspan>
+        <tspan> </tspan>
+        <tspan class="text-bold">src/packer.ts</tspan>
+        <tspan> </tspan>
+        <tspan class="text-dim">(lines 1–100)</tspan>
+        <tspan>  </tspan>
+        <tspan class="text-blue">709 tokens</tspan>
+        <tspan>  </tspan>
+        <tspan class="text-dim">score: 0.65</tspan>
+      </text>
 
-      <!-- Summary Footer -->
-      <g transform="translate(0, 276)">
-        <text x="0" y="0" font-size="13">
-          <tspan class="label-dim">Total: </tspan>
-          <tspan class="stat-highlight">953</tspan>
-          <tspan class="label-dim"> / 1,000 tokens (95.3%)</tspan>
-          <tspan class="label-dim">  |  </tspan>
-          <tspan class="stat-strong">2 slices</tspan>
-          <tspan class="label-dim"> from 2 files</tspan>
-          <tspan class="label-dim">  |  </tspan>
-          <tspan fill="#10b981" font-weight="600">236ms</tspan>
-        </text>
+      <!-- Blank line -->
+      <!-- Line 6: Summary Footer -->
+      <text x="0" y="190">
+        <tspan class="text-bold">Total: </tspan>
+        <tspan class="text-normal">953 / 1000 tokens  |  2 slices from 2 files  |  221ms</tspan>
+        <tspan class="text-yellow"> [TRUNCATED]</tspan>
+      </text>
 
-        <!-- Truncated pill -->
-        <g transform="translate(560, -14)">
-          <rect width="112" height="20" rx="4" fill="#451a03" stroke="#b45309" stroke-width="1"/>
-          <text x="56" y="14" text-anchor="middle" class="term-text tag-trunc">[TRUNCATED]</text>
-        </g>
-      </g>
-
-      <!-- Blinking Cursor -->
-      <rect x="0" y="302" width="8" height="15" fill="#38bdf8" opacity="0.9"/>
-
+      <!-- Cursor -->
+      <rect x="0" y="218" width="8" height="16" fill="#89b4fa" opacity="0.9"/>
     </g>
   </g>
 </svg>
