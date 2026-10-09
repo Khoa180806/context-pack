@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="100%" height="100%" role="img" aria-label="Context Pack Logo">
+  <title>Context Pack Logo</title>
+  <!-- Pure geometric isometric packaging mark (60° / 30° grid alignment) -->
+  <defs>
+    <linearGradient id="top-face" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+    <linearGradient id="left-face" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="right-face" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#1e1b4b"/>
+    </linearGradient>
+    <linearGradient id="core-crystal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#818cf8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Top isometric facet: Token budget boundary -->
+  <polygon points="128,32 211.14,80 128,128 44.86,80" fill="url(#top-face)"/>
+
+  <!-- Left isometric facet: Relevance ranking stream -->
+  <polygon points="44.86,88 124,133.69 124,224 44.86,178.31" fill="url(#left-face)"/>
+
+  <!-- Right isometric facet: Compressed context container -->
+  <polygon points="132,133.69 211.14,88 211.14,178.31 132,224" fill="url(#right-face)"/>
+
+  <!-- Negative-space center aperture -->
+  <polygon points="128,88 162.64,108 128,128 93.36,108" fill="#090d16"/>
+
+  <!-- Internal high-density token crystal -->
+  <polygon points="128,96 151.09,109.33 128,122.67 104.91,109.33" fill="url(#core-crystal)"/>
+</svg>
