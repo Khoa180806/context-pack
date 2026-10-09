@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 380" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 400" width="100%" height="100%">
   <defs>
     <filter id="win-shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
       <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#000000" flood-opacity="0.65"/>
@@ -32,12 +32,12 @@
   </defs>
 
   <!-- Canvas Background -->
-  <rect width="880" height="380" fill="#11111b"/>
+  <rect width="880" height="400" fill="#11111b"/>
 
   <!-- Terminal Window Shell -->
   <g transform="translate(40, 24)" filter="url(#win-shadow)">
     <!-- Window Frame -->
-    <rect width="800" height="330" rx="10" fill="#1e1e2e" stroke="url(#term-border)" stroke-width="1.5"/>
+    <rect width="800" height="352" rx="10" fill="#1e1e2e" stroke="url(#term-border)" stroke-width="1.5"/>
 
     <!-- Titlebar -->
     <path d="M 0,10 C 0,4.48 4.48,0 10,0 L 790,0 C 795.52,0 800,4.48 800,10 L 800,38 L 0,38 Z" fill="url(#term-header)"/>
@@ -50,58 +50,45 @@
 
     <!-- Window Title -->
     <text class="term-code" x="400" y="24" text-anchor="middle" font-size="12" fill="#a6adc8">
-      terminal — cx -t "Fix token count logic..."
+      terminal — cx -t "Fix token count logic"
     </text>
 
     <!-- Terminal Content Area -->
     <g transform="translate(28, 68)" class="term-code">
-      <!-- Command prompt line -->
+      <!-- Command prompt line 1 -->
       <text x="0" y="0">
         <tspan class="prompt">$ </tspan>
         <tspan class="cmd-main">cx </tspan>
         <tspan class="flag">-t </tspan>
-        <tspan class="flag-val">"Fix token count logic and encoding validation" </tspan>
+        <tspan class="flag-val">"Fix token count logic" \</tspan>
+      </text>
+      <!-- Command prompt line 2 (wrapped cleanly with continuation) -->
+      <text x="20" y="22">
         <tspan class="flag">-f </tspan>
-        <tspan class="flag-val">"src/tokenizer.ts" "src/errors.ts" "src/packer.ts" </tspan>
+        <tspan class="flag-val">"src/tokenizer.ts" "src/packer.ts" </tspan>
         <tspan class="flag">-b </tspan>
         <tspan fill="#fab387">1000</tspan>
       </text>
 
-      <!-- Blank line -->
       <!-- Line 1: Header (bold cyan) -->
-      <text x="0" y="32">
+      <text x="0" y="58">
         <tspan class="text-cyan-bold">Context Pack — T02</tspan>
       </text>
 
       <!-- Line 2: Task -->
-      <text x="0" y="54">
+      <text x="0" y="80">
         <tspan class="text-bold">Task: </tspan>
-        <tspan class="text-normal">Fix token count logic and encoding validation</tspan>
+        <tspan class="text-normal">Fix token count logic</tspan>
       </text>
 
       <!-- Line 3: Budget -->
-      <text x="0" y="76">
+      <text x="0" y="102">
         <tspan class="text-bold">Budget: </tspan>
         <tspan class="text-normal">1000 tokens</tspan>
       </text>
 
-      <!-- Blank line -->
       <!-- Line 4: Slice 1 -->
-      <text x="0" y="120">
-        <tspan>  </tspan>
-        <tspan class="text-green">✓</tspan>
-        <tspan> </tspan>
-        <tspan class="text-bold">src/tokenizer.ts</tspan>
-        <tspan> </tspan>
-        <tspan class="text-dim">(lines 1–32)</tspan>
-        <tspan>  </tspan>
-        <tspan class="text-blue">244 tokens</tspan>
-        <tspan>  </tspan>
-        <tspan class="text-dim">score: 0.70</tspan>
-      </text>
-
-      <!-- Line 5: Slice 2 -->
-      <text x="0" y="144">
+      <text x="0" y="146">
         <tspan>  </tspan>
         <tspan class="text-green">✓</tspan>
         <tspan> </tspan>
@@ -114,16 +101,28 @@
         <tspan class="text-dim">score: 0.65</tspan>
       </text>
 
-      <!-- Blank line -->
+      <!-- Line 5: Slice 2 -->
+      <text x="0" y="170">
+        <tspan>  </tspan>
+        <tspan class="text-green">✓</tspan>
+        <tspan> </tspan>
+        <tspan class="text-bold">src/tokenizer.ts</tspan>
+        <tspan> </tspan>
+        <tspan class="text-dim">(lines 1–32)</tspan>
+        <tspan>  </tspan>
+        <tspan class="text-blue">244 tokens</tspan>
+        <tspan>  </tspan>
+        <tspan class="text-dim">score: 0.52</tspan>
+      </text>
+
       <!-- Line 6: Summary Footer -->
-      <text x="0" y="190">
+      <text x="0" y="216">
         <tspan class="text-bold">Total: </tspan>
-        <tspan class="text-normal">953 / 1000 tokens  |  2 slices from 2 files  |  221ms</tspan>
-        <tspan class="text-yellow"> [TRUNCATED]</tspan>
+        <tspan class="text-normal">953 / 1000 tokens  |  2 slices from 2 files  |  233ms</tspan>
       </text>
 
       <!-- Cursor -->
-      <rect x="0" y="218" width="8" height="16" fill="#89b4fa" opacity="0.9"/>
+      <rect x="0" y="244" width="8" height="16" fill="#89b4fa" opacity="0.9"/>
     </g>
   </g>
 </svg>
