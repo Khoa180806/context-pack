@@ -88,7 +88,7 @@ if (!isSubcommandOrHelp) {
 program
   .name('cx')
   .description('Produce a bounded, reusable package of the most relevant context for an agent task')
-  .version('0.1.0')
+  .version('0.1.1')
   .exitOverride((err) => {
     if (err.code === 'commander.helpDisplayed' || err.code === 'commander.version') {
       process.exit(0);

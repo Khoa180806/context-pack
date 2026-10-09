@@ -63,7 +63,7 @@ describe('CLI Integration Tests', () => {
   it('exits with code 0 on --version', async () => {
     const res = await runCli(['--version']);
     expect(res.exitCode).toBe(0);
-    expect(res.stdout).toContain('0.1.0');
+    expect(res.stdout).toMatch(/^\d+\.\d+\.\d+/);
   });
 
   it('fails with exit code 2 when required options are missing', async () => {

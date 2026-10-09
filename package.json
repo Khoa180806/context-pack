@@ -1,6 +1,6 @@
 {
   "name": "ai-context-pack",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Produce a bounded, reusable package of the most relevant context for an agent task.",
   "type": "module",
   "bin": {

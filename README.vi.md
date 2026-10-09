@@ -18,7 +18,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/phiên_bản-0.1.0-blue.svg?style=for-the-badge" alt="Phiên bản 0.1.0" />
+  <img src="https://img.shields.io/badge/phiên_bản-0.1.1-blue.svg?style=for-the-badge" alt="Phiên bản 0.1.1" />
   <img src="https://img.shields.io/badge/node-%3E%3D18.0.0-339933.svg?style=for-the-badge&logo=node.js&logoColor=white" alt="Node >= 18.0.0" />
   <img src="https://img.shields.io/badge/typescript-5.6-3178C6.svg?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/pure--js-no--wasm-orange.svg?style=for-the-badge" alt="Pure JS" />
