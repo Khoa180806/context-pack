@@ -45,11 +45,24 @@ Kế hoạch áp dụng các nguyên tắc từ hệ tri thức thiết kế chu
   - Code & Badges: 12px - 14px, tracking normal.
 
 ### 2.3. Quy tắc biểu tượng & Tránh phản hoa mỹ (Anti-Patterns to Avoid)
-- **Nghiêm cấm dùng Emoji làm biểu tượng giao diện**: Toàn bộ icon sử dụng vector SVG chuẩn hóa từ thư viện `lucide-react` (Code, Cpu, Layers, Terminal, Copy, Check, Sliders, Zap, Shield, Sparkles, ExternalLink).
+- **Nghiêm cấm dùng Emoji làm biểu tượng giao diện**: Toàn bộ icon sử dụng vector SVG chuẩn hóa từ thư viện `lucide-react` (Code, Cpu, Layers, Terminal, Copy, Check, Sliders, Zap, Shield, Sparkles, ExternalLink, Globe).
 - **Tương tác vi mô (Micro-interactions)**:
   - Hiệu ứng hover nút bấm chuyển màu mượt mà trong 150ms–200ms.
   - Phản hồi sao chép (Copy Feedback): Chuyển biểu tượng `Copy` sang `Check` kèm thông báo *"Copied!"* trong 2 giây.
   - Vòng hiển thị tiêu điểm (Focus rings) rõ ràng khi duyệt bằng bàn phím (đạt chuẩn WCAG 2.1 AA với tỷ lệ tương phản > 4.5:1).
+
+### 2.4. Kiến Trúc Đa Ngôn Ngữ Song Hành (Bilingual i18n: English & Tiếng Việt)
+- **Cơ chế chuyển đổi ngôn ngữ tức thì (Zero-Reload Instant Reactive State)**:
+  - Cho phép người dùng chuyển đổi mượt mà giữa **English** và **Tiếng Việt** chỉ với 1 click mà không cần tải lại trang.
+  - Tự động ghi nhớ tùy chọn vào `localStorage` (`context_pack_lang`), tự động nhận diện ngôn ngữ trình duyệt (`navigator.language`) ở lần truy cập đầu tiên.
+  - Tự động đồng bộ thuộc tính trợ năng và SEO: `document.documentElement.lang = lang` (`en` hoặc `vi`).
+- **Nút chuyển đổi ngôn ngữ tinh tế (Language Toggle Pill)**:
+  - Vị trí: Đặt cố định trên thanh điều hướng (Sticky Navbar) và chân trang (Footer).
+  - Thiết kế: Biểu tượng quả cầu `Globe` từ `lucide-react` kết hợp với huy hiệu chọn ngôn ngữ nhỏ gọn (`EN` | `VI`), có hiệu ứng chuyển trạng thái mượt mà.
+- **Phạm vi bản địa hóa 100% (Full Localization Coverage)**:
+  - Toàn bộ nội dung từ Tiêu đề Hero, Menu, Thông số kỹ thuật, Tooltip hướng dẫn đến các đoạn văn giải thích thuật toán đều được dịch chuẩn chỉ và tự nhiên ở cả hai thứ tiếng.
+  - Các kịch bản mẫu (Presets) trong Web Playground cung cấp mô tả nhiệm vụ (Task brief) chuẩn song ngữ (ví dụ: *"Fix token count logic and encoding validation"* / *"Sửa logic đếm token và kiểm tra tính hợp lệ của bảng mã"*).
+  - Bảng tính ROI hỗ trợ cả đơn vị USD và ngữ cảnh tính toán theo ngôn ngữ lựa chọn.
 
 ---
 
@@ -63,9 +76,10 @@ Kế hoạch áp dụng các nguyên tắc từ hệ tri thức thiết kế chu
   - *Benchmarks*
   - *CLI & SDK*
 - **Bên phải**:
+  - **Nút chuyển đổi ngôn ngữ (Language Toggle)**: Nút chuyển đổi song ngữ `EN` / `VI` với biểu tượng quả cầu `Globe`.
   - Nút sao chép nhanh lệnh `npm i -g ai-context-pack`.
   - Huy hiệu liên kết GitHub (Hiển thị icon GitHub).
-  - Nút CTA chuyển nhanh tới Playground (*"Try Demo"*).
+  - Nút CTA chuyển nhanh tới Playground (*"Try Demo"* / *"Thử ngay"*).
 
 ---
 
@@ -213,7 +227,8 @@ web/
 │   ├── components/
 │   │   ├── layout/
 │   │   │   ├── Navbar.tsx          # Thanh điều hướng trên cùng
-│   │   │   └── Footer.tsx          # Chân trang thông tin
+│   │   │   ├── Footer.tsx          # Chân trang thông tin
+│   │   │   └── LanguageToggle.tsx  # Nút chuyển đổi song ngữ EN / VI
 │   │   ├── playground/
 │   │   │   ├── PlaygroundSection.tsx # Khung chứa toàn bộ Playground
 │   │   │   ├── InputPane.tsx       # Bảng điều khiển nhập liệu bên trái
@@ -234,9 +249,13 @@ web/
 │   │       ├── slider.tsx
 │   │       └── input.tsx
 │   ├── hooks/
-│   │   └── useContextPacker.ts     # Custom hook quản lý trạng thái đóng gói
+│   │   ├── useContextPacker.ts     # Custom hook quản lý trạng thái đóng gói
+│   │   └── useLanguage.ts          # Custom hook quản lý chuyển đổi ngôn ngữ
 │   ├── lib/
-│   │   ├── presets.ts              # Dữ liệu kịch bản mẫu có sẵn
+│   │   ├── i18n/
+│   │   │   ├── dictionaries.ts     # Từ điển bản địa hóa toàn bộ UI (en / vi)
+│   │   │   └── types.ts            # Kiểu dữ liệu ngôn ngữ (Language = 'en' | 'vi')
+│   │   ├── presets.ts              # Dữ liệu kịch bản mẫu song ngữ
 │   │   ├── utils.ts                # Hàm tiện ích gộp class (cn)
 │   │   └── engine/
 │   │       ├── clientTokenizer.ts  # BPE token counting chạy trong trình duyệt
@@ -260,13 +279,14 @@ Quá trình triển khai sẽ được chia thành 5 giai đoạn độc lập, 
 - [ ] **Giai đoạn 1: Khởi tạo cấu trúc & Cấu hình nền tảng UI**
   - [ ] Khởi tạo thư mục `web/` với Next.js 16 (App Router), TypeScript, Tailwind CSS v4, Lucide React.
   - [ ] Cấu hình Design Tokens Dark Mode OLED: màu nền `#090D16`, viền `#1E293B`, màu thương hiệu Cyan/Indigo.
+  - [ ] Xây dựng hệ thống i18n: từ điển `dictionaries.ts` (en / vi), hook `useLanguage` và component `LanguageToggle`.
   - [ ] Xây dựng các UI Primitives: Button, Card, Badge, Slider, Tabs, CodeBlock.
   - [ ] Kiểm tra build cơ sở `npm run build` không lỗi.
 
 - [ ] **Giai đoạn 2: Tái hiện Lõi Thuật Toán trên Trình Duyệt & Web Worker**
   - [ ] Chuyển đổi logic `js-tiktoken`, BM25 relevance ranker và Knapsack packer sang chạy an toàn trong môi trường Web.
   - [ ] Thiết lập Web Worker để việc tính toán token và phân loại lát cắt diễn ra song song, không làm đơ giao diện khi kéo slider.
-  - [ ] Xây dựng bộ 3 Presets mẫu chân thực (Authentication Service, Tokenizer Engine, CLI Handler).
+  - [ ] Xây dựng bộ 3 Presets mẫu chân thực với mô tả song ngữ (Authentication Service, Tokenizer Engine, CLI Handler).
   - [ ] Viết unit tests kiểm thử độ chính xác của kết quả đóng gói trên Web Worker.
 
 - [ ] **Giai đoạn 3: Phát triển Section Trọng Tâm — Web Playground**
@@ -277,14 +297,15 @@ Quá trình triển khai sẽ được chia thành 5 giai đoạn độc lập, 
   - [ ] Xây dựng nút tự động sinh lệnh CLI `cx` từ cấu hình đang chọn trên giao diện.
 
 - [ ] **Giai đoạn 4: Hoàn thiện các Section Giới Thiệu & Thẩm Mỹ**
-  - [ ] Triển khai `Navbar` & `HeroSection` với hiệu ứng gradient, nút CTA và hộp cài đặt nhanh.
+  - [ ] Triển khai `Navbar` (kèm `LanguageToggle`) & `HeroSection` với hiệu ứng gradient, nút CTA và hộp cài đặt nhanh.
   - [ ] Triển khai `PipelineSection` trực quan hóa 4 giai đoạn xử lý kèm ảnh kiến trúc Archify.
-  - [ ] Triển khai `BenchmarkSection` kèm bộ tính toán ROI Interactive Savings Calculator.
+  - [ ] Triển khai `BenchmarkSection` kèm bộ tính toán ROI Interactive Savings Calculator (hỗ trợ chuyển đổi ngôn ngữ).
   - [ ] Triển khai `CodeDemoSection` với cửa sổ Terminal mô phỏng chân thực và code mẫu SDK.
-  - [ ] Triển khai `Footer` đầy đủ liên kết và giấy phép MIT.
+  - [ ] Triển khai `Footer` đầy đủ liên kết, bản quyền và nút chuyển đổi ngôn ngữ dự phòng.
 
 - [ ] **Giai đoạn 5: Tối ưu Responsive, SEO, Đóng Gói & Triển Khai Vercel**
   - [ ] Tối ưu hóa hiển thị responsive hoàn hảo trên Desktop (1440px), Laptop (1024px), Tablet (768px) và Mobile (375px).
+  - [ ] Kiểm tra tính nhất quán song ngữ (100% nhãn, tooltip, thông báo chuyển đổi trơn tru giữa English và Tiếng Việt).
   - [ ] Cấu hình OpenGraph metadata, Favicon, Robots.txt, Sitemap.
   - [ ] Cập nhật liên kết Playground vào `README.md` và `README.vi.md`.
   - [ ] Chạy kiểm thử tự động, build production và hướng dẫn triển khai lên Vercel.
@@ -294,6 +315,7 @@ Quá trình triển khai sẽ được chia thành 5 giai đoạn độc lập, 
 ## 6. Tiêu Chí Nghiệm Thu (Acceptance Criteria)
 
 1. **Về tính năng**: Web Playground hoạt động mượt mà, phản hồi tức thì (< 30ms) khi kéo thanh trượt token; xuất đúng dải dòng, điểm BM25 và định dạng JSON envelope tương đồng 100% với CLI.
-2. **Về bảo mật**: 100% mã nguồn người dùng nhập vào được xử lý tại chỗ trong trình duyệt, không có bất kỳ request API nào gửi mã nguồn ra máy chủ bên ngoài.
-3. **Về trải nghiệm UX/UI**: Giao diện chuẩn dark mode kỹ thuật cao cấp, không dùng emoji làm biểu tượng; font chữ monospace hiển thị số liệu thẳng hàng; thao tác copy có phản hồi trực quan.
-4. **Về kỹ thuật & Build**: Mã nguồn biên dịch sạch sẽ (`tsc --noEmit` và `next build` 0 lỗi); toàn bộ unit tests vượt qua; sẵn sàng triển khai lên Vercel chỉ với 1 cú click.
+2. **Về đa ngôn ngữ (i18n)**: Chuyển đổi qua lại giữa English và Tiếng Việt tức thì mà không cần reload trang; tự động lưu trạng thái vào `localStorage`; 100% nội dung từ tiêu đề, nút bấm, bảng tính ROI đến kịch bản mẫu đều được bản địa hóa chuẩn mực.
+3. **Về bảo mật**: 100% mã nguồn người dùng nhập vào được xử lý tại chỗ trong trình duyệt, không có bất kỳ request API nào gửi mã nguồn ra máy chủ bên ngoài.
+4. **Về trải nghiệm UX/UI**: Giao diện chuẩn dark mode kỹ thuật cao cấp, không dùng emoji làm biểu tượng; font chữ monospace hiển thị số liệu thẳng hàng; thao tác copy có phản hồi trực quan.
+5. **Về kỹ thuật & Build**: Mã nguồn biên dịch sạch sẽ (`tsc --noEmit` và `next build` 0 lỗi); toàn bộ unit tests vượt qua; sẵn sàng triển khai lên Vercel chỉ với 1 cú click.
