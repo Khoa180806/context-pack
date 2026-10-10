@@ -13,6 +13,7 @@
 <p align="center">
   <a href="README.md">English</a> • <a href="README.vi.md">Tiếng Việt</a>
   <br />
+  <a href="https://context-pack.vercel.app">🌐 Trải nghiệm Trực tiếp (Live Playground)</a> •
   <a href="docs/SPEC.md">Đặc tả kỹ thuật (Spec)</a> •
   <a href="docs/BENCHMARK_RESULTS.md">Báo cáo Benchmark</a>
 </p>
