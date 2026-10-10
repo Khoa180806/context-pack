@@ -7,7 +7,6 @@ import type {
   ClientContextPackEnvelope,
   PresetScenario,
 } from '@/types/playground';
-import type { WorkerRequest, WorkerResponse } from '@/lib/engine/worker';
 
 export interface UseContextPackerOptions {
   initialPresetId?: string;
@@ -32,86 +31,49 @@ export function useContextPacker({ initialPresetId = 'auth-bug' }: UseContextPac
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const workerRef = useRef<Worker | null>(null);
-  const nextRequestIdRef = useRef<number>(1);
-  const pendingRequestsRef = useRef<Map<string, (resp: WorkerResponse) => void>>(new Map());
+  // Timer ref for cleanup on unmount
+  const packTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Initialize Web Worker when available
   useEffect(() => {
-    if (typeof window !== 'undefined' && typeof Worker !== 'undefined') {
-      try {
-        const worker = new Worker(new URL('@/lib/engine/worker.ts', import.meta.url), {
-          type: 'module',
-        });
-
-        worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
-          const response = event.data;
-          const resolver = pendingRequestsRef.current.get(response.id);
-          if (resolver) {
-            resolver(response);
-            pendingRequestsRef.current.delete(response.id);
-          }
-        };
-
-        workerRef.current = worker;
-
-        return () => {
-          worker.terminate();
-          workerRef.current = null;
-        };
-      } catch (err) {
-        console.warn('Web Worker fallback to main thread:', err);
-      }
-    }
+    return () => {
+      if (packTimerRef.current !== null) clearTimeout(packTimerRef.current);
+    };
   }, []);
 
-  // Pack execution logic (Worker or main thread fallback)
+  // ── Pack execution ──────────────────────────────────────────────────────────
+  // Runs on main thread via setTimeout(0) so the isProcessing state renders
+  // (skeleton visible) before js-tiktoken does its work.
+  //
+  // Web Worker was removed: the @/ path alias doesn't resolve in browser
+  // Worker context, causing silent failure with no feedback to the user.
   const executePack = useCallback(() => {
     if (!task.trim() || files.length === 0) return;
 
     setIsProcessing(true);
     setErrorMessage(null);
 
-    const packOpts = {
-      task,
-      files,
-      budget,
-      encoding,
-      maxSliceLines: 100,
-    };
-
-    if (workerRef.current) {
-      const requestId = `req_${nextRequestIdRef.current++}`;
-      const request: WorkerRequest = {
-        id: requestId,
-        type: 'PACK',
-        payload: { packOptions: packOpts },
-      };
-
-      pendingRequestsRef.current.set(requestId, (response: WorkerResponse) => {
-        setIsProcessing(false);
-        if (response.type === 'PACK_SUCCESS' && response.payload?.envelope) {
-          setEnvelope(response.payload.envelope);
-        } else if (response.payload?.error) {
-          setErrorMessage(response.payload.error);
-        }
-      });
-
-      workerRef.current.postMessage(request);
-    } else {
-      // Synchronous fallback
+    packTimerRef.current = setTimeout(() => {
       try {
-        const result = packVirtualFiles(packOpts);
+        const result = packVirtualFiles({
+          task,
+          files,
+          budget,
+          encoding,
+          maxSliceLines: 100,
+        });
         setEnvelope(result);
+        setErrorMessage(null);
       } catch (err: unknown) {
         setErrorMessage(err instanceof Error ? err.message : String(err));
+        setEnvelope(null);
       } finally {
         setIsProcessing(false);
       }
-    }
+    }, 0);
   }, [task, files, budget, encoding]);
 
-  // Load Preset — E: also clears stale envelope so ResultPane shows idle state
+  // ── Load preset ─────────────────────────────────────────────────────────────
+  // Resets envelope so ResultPane shows idle state after switching scenarios.
   const loadPreset = useCallback(
     (presetId: string, currentLang: 'en' | 'vi' = 'en') => {
       const preset = PRESET_SCENARIOS.find((p) => p.id === presetId);
@@ -121,7 +83,7 @@ export function useContextPacker({ initialPresetId = 'auth-bug' }: UseContextPac
       setTask(preset.task[currentLang]);
       setBudget(preset.recommendedBudget);
       setActiveFileIndex(0);
-      setEnvelope(null);      // E: clear previous results on scenario switch
+      setEnvelope(null);
       setErrorMessage(null);
 
       const updatedFiles = preset.files.map((f) => ({
@@ -133,7 +95,7 @@ export function useContextPacker({ initialPresetId = 'auth-bug' }: UseContextPac
     [encoding],
   );
 
-  // Update a single file content
+  // ── File content update ──────────────────────────────────────────────────────
   const updateFileContent = useCallback(
     (index: number, newContent: string) => {
       setFiles((prev) => {
@@ -151,28 +113,31 @@ export function useContextPacker({ initialPresetId = 'auth-bug' }: UseContextPac
     [encoding],
   );
 
-  // A-2: Add a new blank (or pre-filled) file and jump to it
+  // ── Add file ─────────────────────────────────────────────────────────────────
   const addFile = useCallback(
     (name: string, content = '') => {
       const newFile: VirtualFile = {
         name,
-        language: name.endsWith('.py') ? 'python' : name.endsWith('.md') ? 'markdown' : 'typescript',
+        language:
+          name.endsWith('.py') ? 'python' :
+          name.endsWith('.md') ? 'markdown' :
+          'typescript',
         content,
         tokens: countTokens(content, encoding),
       };
       setFiles((prev) => {
         const next = [...prev, newFile];
-        setActiveFileIndex(next.length - 1); // jump to the newly added file
+        setActiveFileIndex(next.length - 1);
         return next;
       });
     },
     [encoding],
   );
 
-  // A-3: Delete a file by index; reset activeFileIndex if needed
+  // ── Delete file ───────────────────────────────────────────────────────────────
   const deleteFile = useCallback((index: number) => {
     setFiles((prev) => {
-      if (prev.length <= 1) return prev; // always keep at least one file
+      if (prev.length <= 1) return prev;
       return prev.filter((_, i) => i !== index);
     });
     setActiveFileIndex((prev) => {
@@ -182,10 +147,12 @@ export function useContextPacker({ initialPresetId = 'auth-bug' }: UseContextPac
     });
   }, []);
 
-  // A-4: Rename a file by index
+  // ── Rename file ───────────────────────────────────────────────────────────────
   const renameFile = useCallback((index: number, newName: string) => {
     if (!newName.trim()) return;
-    setFiles((prev) => prev.map((f, i) => (i === index ? { ...f, name: newName.trim() } : f)));
+    setFiles((prev) =>
+      prev.map((f, i) => (i === index ? { ...f, name: newName.trim() } : f)),
+    );
   }, []);
 
   return {
@@ -196,7 +163,7 @@ export function useContextPacker({ initialPresetId = 'auth-bug' }: UseContextPac
     files,
     activeFileIndex,
     envelope,
-    isProcessing,    // A-5: exposed for button disabled state
+    isProcessing,
     errorMessage,
     setTask,
     setBudget,
@@ -204,9 +171,9 @@ export function useContextPacker({ initialPresetId = 'auth-bug' }: UseContextPac
     setActiveFileIndex,
     loadPreset,
     updateFileContent,
-    addFile,         // A-2
-    deleteFile,      // A-3
-    renameFile,      // A-4
+    addFile,
+    deleteFile,
+    renameFile,
     executePack,
   };
 }

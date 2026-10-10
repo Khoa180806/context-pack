@@ -10,7 +10,7 @@ import { TabList, TabTrigger } from '@/components/ui/tabs';
 import type { ClientContextPackEnvelope, VirtualFile } from '@/types/playground';
 import type { Language } from '@/lib/i18n/types';
 import { DICTIONARY } from '@/lib/i18n/dictionaries';
-import { Terminal, Copy, Check, Clock, Layers, Package, Loader } from 'lucide-react';
+import { Terminal, Copy, Check, Clock, Layers, Package, Loader, AlertCircle } from 'lucide-react';
 
 export interface ResultPaneProps {
   language: Language;
@@ -19,6 +19,7 @@ export interface ResultPaneProps {
   files: VirtualFile[];
   task: string;
   isProcessing: boolean;
+  errorMessage?: string | null;
   className?: string;
 }
 
@@ -89,6 +90,7 @@ export function ResultPane({
   files,
   task,
   isProcessing,
+  errorMessage,
   className,
 }: ResultPaneProps) {
   const t = DICTIONARY[language].playground;
@@ -152,7 +154,7 @@ export function ResultPane({
         </div>
       </div>
 
-      {/* 3. Content area: idle / processing / results */}
+      {/* 3. Content area: idle / processing / error / results */}
       {isProcessing ? (
         /* D-4: skeleton loader */
         <div className="space-y-3">
@@ -161,6 +163,17 @@ export function ResultPane({
             <span>{language === 'vi' ? 'Đang phân tích...' : 'Analysing files...'}</span>
           </div>
           <ProcessingSkeleton />
+        </div>
+      ) : errorMessage ? (
+        /* Error state — visible pack failure */
+        <div className="flex flex-col items-center gap-3 py-10 rounded-xl border border-rose-800/40 bg-rose-950/20 text-center px-4">
+          <AlertCircle className="w-8 h-8 text-rose-500" />
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-rose-300">
+              {language === 'vi' ? 'Lỗi khi đóng gói' : 'Pack failed'}
+            </p>
+            <p className="text-xs text-rose-400/80 font-mono break-all">{errorMessage}</p>
+          </div>
         </div>
       ) : envelope === null ? (
         /* D-3: idle placeholder */

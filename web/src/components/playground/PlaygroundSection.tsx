@@ -24,6 +24,7 @@ export function PlaygroundSection({ language }: PlaygroundSectionProps) {
     activeFileIndex,
     envelope,
     isProcessing,   // A-5: for button disabled state
+    errorMessage,   // surface pack errors to ResultPane
     setTask,
     setBudget,
     setEncoding,
@@ -97,6 +98,7 @@ export function PlaygroundSection({ language }: PlaygroundSectionProps) {
               files={files}
               task={task}
               isProcessing={isProcessing}
+              errorMessage={errorMessage}
             />
           </div>
         </div>
