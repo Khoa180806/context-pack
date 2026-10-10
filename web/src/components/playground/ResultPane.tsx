@@ -18,6 +18,7 @@ export interface ResultPaneProps {
   budget: number;
   files: VirtualFile[];
   task: string;
+  isProcessing: boolean;
   className?: string;
 }
 
@@ -27,6 +28,7 @@ export function ResultPane({
   budget,
   files,
   task,
+  isProcessing,
   className,
 }: ResultPaneProps) {
   const t = DICTIONARY[language].playground;

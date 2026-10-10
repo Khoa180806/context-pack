@@ -20,14 +20,20 @@ export interface InputPaneProps {
   encoding: string;
   files: VirtualFile[];
   activeFileIndex: number;
+  isProcessing: boolean;
   onSelectPreset: (presetId: string) => void;
   onTaskChange: (task: string) => void;
   onBudgetChange: (budget: number) => void;
   onEncodingChange: (encoding: string) => void;
   onActiveFileChange: (index: number) => void;
   onFileContentChange: (index: number, content: string) => void;
+  onAddFile: (name: string, content?: string) => void;
+  onDeleteFile: (index: number) => void;
+  onRenameFile: (index: number, newName: string) => void;
+  onPack: () => void;
   className?: string;
 }
+
 
 export function InputPane({
   language,
@@ -37,12 +43,17 @@ export function InputPane({
   encoding,
   files,
   activeFileIndex,
+  isProcessing,
   onSelectPreset,
   onTaskChange,
   onBudgetChange,
   onEncodingChange,
   onActiveFileChange,
   onFileContentChange,
+  onAddFile,
+  onDeleteFile,
+  onRenameFile,
+  onPack,
   className,
 }: InputPaneProps) {
   const t = DICTIONARY[language].playground;

@@ -111,15 +111,6 @@ export function useContextPacker({ initialPresetId = 'auth-bug' }: UseContextPac
     }
   }, [task, files, budget, encoding]);
 
-  // Recalculate packing whenever inputs change (debounced for rapid slider adjustments)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      executePack();
-    }, 50);
-
-    return () => clearTimeout(timer);
-  }, [executePack]);
-
   // Load Preset
   const loadPreset = useCallback(
     (presetId: string, currentLang: 'en' | 'vi' = 'en') => {
@@ -158,6 +149,40 @@ export function useContextPacker({ initialPresetId = 'auth-bug' }: UseContextPac
     [encoding],
   );
 
+  // A-2: Add a new blank (or pre-filled) file to the virtual file list
+  const addFile = useCallback(
+    (name: string, content = '') => {
+      const newFile: VirtualFile = {
+        name,
+        language: name.endsWith('.py') ? 'python' : name.endsWith('.md') ? 'markdown' : 'typescript',
+        content,
+        tokens: countTokens(content, encoding),
+      };
+      setFiles((prev) => [...prev, newFile]);
+      setActiveFileIndex((prev) => prev); // keep current active; user can switch manually
+    },
+    [encoding],
+  );
+
+  // A-3: Delete a file by index; reset activeFileIndex if needed
+  const deleteFile = useCallback((index: number) => {
+    setFiles((prev) => {
+      if (prev.length <= 1) return prev; // always keep at least one file
+      return prev.filter((_, i) => i !== index);
+    });
+    setActiveFileIndex((prev) => {
+      if (index < prev) return prev - 1;
+      if (index === prev) return Math.max(0, prev - 1);
+      return prev;
+    });
+  }, []);
+
+  // A-4: Rename a file by index
+  const renameFile = useCallback((index: number, newName: string) => {
+    if (!newName.trim()) return;
+    setFiles((prev) => prev.map((f, i) => (i === index ? { ...f, name: newName.trim() } : f)));
+  }, []);
+
   return {
     selectedPresetId,
     task,
@@ -166,7 +191,7 @@ export function useContextPacker({ initialPresetId = 'auth-bug' }: UseContextPac
     files,
     activeFileIndex,
     envelope,
-    isProcessing,
+    isProcessing,    // A-5: exposed for button disabled state
     errorMessage,
     setTask,
     setBudget,
@@ -174,6 +199,9 @@ export function useContextPacker({ initialPresetId = 'auth-bug' }: UseContextPac
     setActiveFileIndex,
     loadPreset,
     updateFileContent,
+    addFile,         // A-2
+    deleteFile,      // A-3
+    renameFile,      // A-4
     executePack,
   };
 }

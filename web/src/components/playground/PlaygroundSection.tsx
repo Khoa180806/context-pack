@@ -23,17 +23,25 @@ export function PlaygroundSection({ language }: PlaygroundSectionProps) {
     files,
     activeFileIndex,
     envelope,
+    isProcessing,   // A-5: for button disabled state
     setTask,
     setBudget,
     setEncoding,
     setActiveFileIndex,
     loadPreset,
     updateFileContent,
+    addFile,        // A-2
+    deleteFile,     // A-3
+    renameFile,     // A-4
+    executePack,    // exposed for Pack button
   } = useContextPacker({ initialPresetId: 'auth-bug' });
 
-  // Update task language when language toggles if using default presets
+  // Reload preset translations when language switches — skip if user is on a custom scenario
+  // to avoid wiping their custom files and prompt (A-6)
   React.useEffect(() => {
-    loadPreset(selectedPresetId, language);
+    if (selectedPresetId !== 'custom') {
+      loadPreset(selectedPresetId, language);
+    }
   }, [language, loadPreset, selectedPresetId]);
 
   return (
@@ -66,12 +74,17 @@ export function PlaygroundSection({ language }: PlaygroundSectionProps) {
               encoding={encoding}
               files={files}
               activeFileIndex={activeFileIndex}
+              isProcessing={isProcessing}
               onSelectPreset={(id) => loadPreset(id, language)}
               onTaskChange={setTask}
               onBudgetChange={setBudget}
               onEncodingChange={setEncoding}
               onActiveFileChange={setActiveFileIndex}
               onFileContentChange={updateFileContent}
+              onAddFile={addFile}
+              onDeleteFile={deleteFile}
+              onRenameFile={renameFile}
+              onPack={executePack}
             />
           </div>
 
@@ -83,6 +96,7 @@ export function PlaygroundSection({ language }: PlaygroundSectionProps) {
               budget={budget}
               files={files}
               task={task}
+              isProcessing={isProcessing}
             />
           </div>
         </div>
