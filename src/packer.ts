@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { ContextPackError } from './errors.js';
 import { countTokens } from './tokenizer.js';
-import { resolveFiles, readFileContent, sliceLines } from './slicer.js';
+import { resolveFiles, readFileContent, sliceLines, sliceRelevantLines } from './slicer.js';
 import { rankFiles, type FileToRank } from './ranker.js';
 import type {
   PackOptions,
@@ -56,7 +56,7 @@ export async function pack(options: PackOptions): Promise<ContextPackEnvelope> {
 
   // Sequentially pack slices within token budget
   for (const item of ranked) {
-    const sliced = sliceLines(item.content, 1, maxSliceLines);
+    const sliced = sliceRelevantLines(item.content, options.task, maxSliceLines);
     const tokens = countTokens(sliced.content, encoding);
 
     if (usedTokens + tokens <= budget) {

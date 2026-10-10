@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { resolveFiles, readFileContent, sliceLines } from '../src/slicer.js';
+import { resolveFiles, readFileContent, sliceLines, sliceRelevantLines } from '../src/slicer.js';
 import { ContextPackError } from '../src/errors.js';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -35,6 +35,38 @@ describe('sliceLines', () => {
     expect(res.endLine).toBe(1);
   });
 });
+
+describe('sliceRelevantLines', () => {
+  const codeLines = Array.from({ length: 150 }, (_, i) => `// Line ${i + 1}`);
+  codeLines[79] = 'export function validateSession(sessionId: string) {';
+  codeLines[80] = '  return checkToken(sessionId);';
+  codeLines[81] = '}';
+  const longFile = codeLines.join('\n');
+
+  it('returns full content if file length is <= maxSliceLines', () => {
+    const shortCode = 'line 1\nline 2\nline 3';
+    const res = sliceRelevantLines(shortCode, 'fix line 2', 10);
+    expect(res.content).toBe(shortCode);
+    expect(res.startLine).toBe(1);
+    expect(res.endLine).toBe(3);
+  });
+
+  it('centers context window around matching hotspot keyword in large files', () => {
+    const res = sliceRelevantLines(longFile, 'Fix bug in validateSession token check', 30);
+    // Line 80 has validateSession. Window of 30 lines with ~35% lead (10 lines) should start around line 70
+    expect(res.startLine).toBeLessThanOrEqual(80);
+    expect(res.endLine).toBeGreaterThanOrEqual(82);
+    expect(res.content).toContain('validateSession');
+    expect(res.endLine - res.startLine + 1).toBe(30);
+  });
+
+  it('falls back to beginning of file if no keywords match', () => {
+    const res = sliceRelevantLines(longFile, 'xyz unknown keyword nowhere found', 20);
+    expect(res.startLine).toBe(1);
+    expect(res.endLine).toBe(20);
+  });
+});
+
 
 describe('readFileContent & resolveFiles', () => {
   let tempDir: string;
