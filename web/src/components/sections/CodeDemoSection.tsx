@@ -46,7 +46,7 @@ console.log(\`Packed \${result.data.slice_count} high-relevance code slices.\`);
         <div className="text-center max-w-3xl mx-auto space-y-3">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono border border-cyan-500/30 bg-cyan-950/30 text-cyan-400">
             <Code className="w-3.5 h-3.5" />
-            <span>Developer Experience</span>
+            <span>{language === 'vi' ? 'Trải Nghiệm Lập Trình Viên' : 'Developer Experience'}</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
             {t.title}
@@ -82,7 +82,9 @@ console.log(\`Packed \${result.data.slice_count} high-relevance code slices.\`);
                   <span className="w-3 h-3 rounded-full bg-rose-500/80 inline-block" />
                   <span className="w-3 h-3 rounded-full bg-amber-500/80 inline-block" />
                   <span className="w-3 h-3 rounded-full bg-emerald-500/80 inline-block" />
-                  <span className="ml-2 text-slate-400">cx CLI terminal execution demo</span>
+                  <span className="ml-2 text-slate-400">
+                    {language === 'vi' ? 'Minh họa chạy lệnh cx trong terminal' : 'cx CLI terminal execution demo'}
+                  </span>
                 </div>
                 <span className="text-[11px] text-cyan-400 font-mono">v0.1.1</span>
               </div>
@@ -113,9 +115,10 @@ console.log(\`Packed \${result.data.slice_count} high-relevance code slices.\`);
                   className="h-7 text-xs font-mono gap-1.5"
                 >
                   {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copied ? 'Copied!' : 'Copy Code'}</span>
+                  <span>{copied ? (language === 'vi' ? 'Đã sao chép!' : 'Copied!') : (language === 'vi' ? 'Sao chép mã' : 'Copy Code')}</span>
                 </Button>
               </div>
+
 
               {/* Code Pre */}
               <div className="p-6 overflow-x-auto text-xs font-mono leading-relaxed text-slate-200">

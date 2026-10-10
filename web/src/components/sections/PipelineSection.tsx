@@ -58,7 +58,7 @@ export function PipelineSection({ language }: PipelineSectionProps) {
         <div className="text-center max-w-3xl mx-auto space-y-3">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono border border-indigo-500/30 bg-indigo-950/30 text-indigo-400">
             <Layers className="w-3.5 h-3.5" />
-            <span>Architecture & Pipeline</span>
+            <span>{language === 'vi' ? 'Kiến trúc & Quy trình' : 'Architecture & Pipeline'}</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
             {t.title}
@@ -107,7 +107,7 @@ export function PipelineSection({ language }: PipelineSectionProps) {
         <div className="space-y-4">
           <div className="flex items-center justify-between text-xs font-mono text-slate-400">
             <span className="font-semibold text-slate-200">
-              Complete System Architecture Diagram
+              {language === 'vi' ? 'Sơ đồ Kiến trúc Hệ thống Toàn diện' : 'Complete System Architecture Diagram'}
             </span>
             <button
               type="button"
@@ -115,9 +115,10 @@ export function PipelineSection({ language }: PipelineSectionProps) {
               className="inline-flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 font-medium"
             >
               <Maximize2 className="w-3.5 h-3.5" />
-              <span>Expand Full View</span>
+              <span>{language === 'vi' ? 'Phóng to sơ đồ' : 'Expand Full View'}</span>
             </button>
           </div>
+
 
           <div
             onClick={() => setModalOpen(true)}
@@ -134,7 +135,7 @@ export function PipelineSection({ language }: PipelineSectionProps) {
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition flex items-end justify-center pb-6">
               <span className="px-4 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs font-mono text-cyan-300 shadow-xl flex items-center gap-2">
                 <Maximize2 className="w-4 h-4" />
-                Click to inspect architecture diagram
+                {language === 'vi' ? 'Nhấn để phóng to sơ đồ kiến trúc' : 'Click to inspect architecture diagram'}
               </span>
             </div>
           </div>
@@ -151,13 +152,15 @@ export function PipelineSection({ language }: PipelineSectionProps) {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-between items-center pb-3 border-b border-slate-800 mb-4 text-xs font-mono">
-                <span className="text-slate-300 font-semibold">Context Pack Architecture</span>
+                <span className="text-slate-300 font-semibold">
+                  {language === 'vi' ? 'Sơ Đồ Kiến Trúc Context Pack' : 'Context Pack Architecture'}
+                </span>
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
                   className="px-2 py-1 rounded bg-slate-800 text-slate-400 hover:text-white"
                 >
-                  Close (ESC)
+                  {language === 'vi' ? 'Đóng (ESC)' : 'Close (ESC)'}
                 </button>
               </div>
               <div className="relative w-full h-[70vh]">

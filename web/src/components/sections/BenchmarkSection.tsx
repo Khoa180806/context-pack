@@ -81,7 +81,7 @@ export function BenchmarkSection({ language }: BenchmarkSectionProps) {
         <div className="text-center max-w-3xl mx-auto space-y-3">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono border border-emerald-500/30 bg-emerald-950/30 text-emerald-400">
             <BarChart3 className="w-3.5 h-3.5" />
-            <span>Empirical Verification</span>
+            <span>{language === 'vi' ? 'Đo kiểm thực nghiệm' : 'Empirical Verification'}</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
             {t.title}
@@ -96,7 +96,9 @@ export function BenchmarkSection({ language }: BenchmarkSectionProps) {
               {t.avgReduction}
             </div>
             <div className="text-sm font-semibold text-slate-200">{t.avgReductionLabel}</div>
-            <div className="text-xs text-slate-500 font-mono">Tested on R3 token_diff repository</div>
+            <div className="text-xs text-slate-500 font-mono">
+              {language === 'vi' ? 'Đo kiểm trên repo token_diff chuẩn' : 'Tested on R3 token_diff repository'}
+            </div>
           </Card>
 
           <Card className="bg-slate-900/60 border-slate-800 text-center p-6 space-y-2">
@@ -104,7 +106,9 @@ export function BenchmarkSection({ language }: BenchmarkSectionProps) {
               {t.avgLatency}
             </div>
             <div className="text-sm font-semibold text-slate-200">{t.avgLatencyLabel}</div>
-            <div className="text-xs text-slate-500 font-mono">100% In-memory execution</div>
+            <div className="text-xs text-slate-500 font-mono">
+              {language === 'vi' ? 'Xử lý 100% trong bộ nhớ' : '100% In-memory execution'}
+            </div>
           </Card>
 
           <Card className="bg-slate-900/60 border-slate-800 text-center p-6 space-y-2">
@@ -112,7 +116,9 @@ export function BenchmarkSection({ language }: BenchmarkSectionProps) {
               {t.safetyMargin}
             </div>
             <div className="text-sm font-semibold text-slate-200">{t.safetyMarginLabel}</div>
-            <div className="text-xs text-slate-500 font-mono">Exceeds 20% savings threshold</div>
+            <div className="text-xs text-slate-500 font-mono">
+              {language === 'vi' ? 'Vượt xa ngưỡng tiết kiệm 20%' : 'Exceeds 20% savings threshold'}
+            </div>
           </Card>
         </div>
 
@@ -120,23 +126,24 @@ export function BenchmarkSection({ language }: BenchmarkSectionProps) {
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 overflow-hidden shadow-xl">
           <div className="px-6 py-4 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between">
             <div className="font-semibold text-sm text-slate-200">
-              Standard Benchmark Tasks (Codebase: token_diff — 5 Scenarios)
+              {language === 'vi'
+                ? 'Các Tác Vụ Đo Kiểm Chuẩn (Codebase: token_diff — 5 Kịch bản)'
+                : 'Standard Benchmark Tasks (Codebase: token_diff — 5 Scenarios)'}
             </div>
             <Badge variant="emerald" className="font-mono text-xs">
-              60/60 Tests Passing
+              {language === 'vi' ? '60/60 Tests Đạt' : '60/60 Tests Passing'}
             </Badge>
-
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs font-mono">
               <thead>
                 <tr className="border-b border-slate-800 text-slate-400 bg-slate-950/40">
-                  <th className="py-3 px-6">Task Name</th>
-                  <th className="py-3 px-6">Baseline Tokens</th>
-                  <th className="py-3 px-6">Packed Tokens</th>
-                  <th className="py-3 px-6">Reduction</th>
-                  <th className="py-3 px-6">Latency</th>
+                  <th className="py-3 px-6">{language === 'vi' ? 'Tên Tác Vụ' : 'Task Name'}</th>
+                  <th className="py-3 px-6">{language === 'vi' ? 'Token Ban Đầu' : 'Baseline Tokens'}</th>
+                  <th className="py-3 px-6">{language === 'vi' ? 'Token Sau Gói' : 'Packed Tokens'}</th>
+                  <th className="py-3 px-6">{language === 'vi' ? 'Tỷ Lệ Giảm' : 'Reduction'}</th>
+                  <th className="py-3 px-6">{language === 'vi' ? 'Độ Trễ' : 'Latency'}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
@@ -167,7 +174,9 @@ export function BenchmarkSection({ language }: BenchmarkSectionProps) {
                 <span>{t.calculatorTitle}</span>
               </h3>
               <p className="text-xs text-slate-400 font-sans mt-0.5">
-                Simulate potential annual token cost reductions based on your team size and agent activity.
+                {language === 'vi'
+                  ? 'Ước tính mức chi phí token tiết kiệm được hàng năm dựa trên quy mô nhóm và tần suất hoạt động của AI agent.'
+                  : 'Simulate potential annual token cost reductions based on your team size and agent activity.'}
               </p>
             </div>
             <div className="flex items-center gap-1.5 self-start sm:self-auto">
@@ -195,7 +204,9 @@ export function BenchmarkSection({ language }: BenchmarkSectionProps) {
               <div className="space-y-2">
                 <div className="flex justify-between text-xs">
                   <span className="font-semibold text-slate-300">{t.dailyTasks}</span>
-                  <span className="font-mono text-cyan-400 font-bold">{dailyTasks} tasks/day</span>
+                  <span className="font-mono text-cyan-400 font-bold">
+                    {dailyTasks} {language === 'vi' ? 'task/ngày' : 'tasks/day'}
+                  </span>
                 </div>
                 <Slider
                   value={dailyTasks}
@@ -205,9 +216,9 @@ export function BenchmarkSection({ language }: BenchmarkSectionProps) {
                   onChange={setDailyTasks}
                 />
                 <div className="flex justify-between text-[10px] text-slate-500 font-mono">
-                  <span>10 tasks</span>
+                  <span>10 {language === 'vi' ? 'task' : 'tasks'}</span>
                   <span>500</span>
-                  <span>1,000 tasks/day</span>
+                  <span>1,000 {language === 'vi' ? 'task/ngày' : 'tasks/day'}</span>
                 </div>
               </div>
 
@@ -246,10 +257,13 @@ export function BenchmarkSection({ language }: BenchmarkSectionProps) {
               <div className="border-t border-slate-800 pt-3">
                 <div className="text-xs text-slate-400 font-mono">{t.monthlyCostSaved}</div>
                 <div className="text-3xl sm:text-4xl font-extrabold text-emerald-400 font-mono">
-                  ${monthlyCostSaved.toFixed(2)} <span className="text-xs text-slate-500 font-normal">/ month</span>
+                  ${monthlyCostSaved.toFixed(2)}{' '}
+                  <span className="text-xs text-slate-500 font-normal">
+                    {language === 'vi' ? '/ tháng' : '/ month'}
+                  </span>
                 </div>
                 <div className="text-xs text-slate-500 font-mono mt-1">
-                  ~ ${yearlyCostSaved.toFixed(0)} USD saved annually
+                  ~ ${yearlyCostSaved.toFixed(0)} USD {language === 'vi' ? 'tiết kiệm mỗi năm' : 'saved annually'}
                 </div>
               </div>
             </div>
@@ -257,5 +271,6 @@ export function BenchmarkSection({ language }: BenchmarkSectionProps) {
         </div>
       </div>
     </section>
+
   );
 }

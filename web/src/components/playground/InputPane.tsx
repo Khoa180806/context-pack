@@ -387,7 +387,9 @@ export function InputPane({
             <FileCode className="w-3.5 h-3.5 text-cyan-400" />
             <span>{t.filesLabel}</span>
           </label>
-          <span className="text-xs text-slate-500 font-mono">{files.length} files</span>
+          <span className="text-xs text-slate-500 font-mono">
+            {files.length} {language === 'vi' ? 'tệp' : 'files'}
+          </span>
         </div>
 
         {/* C-5: Action bar — Add / Rename / Delete */}
@@ -395,33 +397,38 @@ export function InputPane({
           <button
             type="button"
             onClick={() => { setShowAddDialog(true); setRenamingIndex(null); }}
-            title="Add new file"
+            title={language === 'vi' ? 'Thêm tệp mới' : 'Add new file'}
             className="flex items-center gap-1 px-2 py-1 rounded text-xs font-mono text-slate-400 border border-slate-800 bg-slate-900/50 hover:text-cyan-300 hover:border-cyan-500/40 transition"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Add</span>
+            <span>{language === 'vi' ? 'Thêm' : 'Add'}</span>
           </button>
           <button
             type="button"
             onClick={() => { setRenamingIndex(activeFileIndex); setShowAddDialog(false); }}
             disabled={files.length === 0}
-            title="Rename active file"
+            title={language === 'vi' ? 'Đổi tên tệp hiện tại' : 'Rename active file'}
             className="flex items-center gap-1 px-2 py-1 rounded text-xs font-mono text-slate-400 border border-slate-800 bg-slate-900/50 hover:text-indigo-300 hover:border-indigo-500/40 transition disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Pencil className="w-3.5 h-3.5" />
-            <span>Rename</span>
+            <span>{language === 'vi' ? 'Đổi tên' : 'Rename'}</span>
           </button>
           <button
             type="button"
             onClick={handleDeleteActive}
             disabled={files.length <= 1}
-            title={files.length <= 1 ? 'Cannot delete the last file' : 'Delete active file'}
+            title={
+              files.length <= 1
+                ? (language === 'vi' ? 'Không thể xóa tệp cuối cùng' : 'Cannot delete the last file')
+                : (language === 'vi' ? 'Xóa tệp hiện tại' : 'Delete active file')
+            }
             className="flex items-center gap-1 px-2 py-1 rounded text-xs font-mono text-slate-400 border border-slate-800 bg-slate-900/50 hover:text-rose-400 hover:border-rose-500/40 transition disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Trash2 className="w-3.5 h-3.5" />
-            <span>Delete</span>
+            <span>{language === 'vi' ? 'Xóa' : 'Delete'}</span>
           </button>
         </div>
+
 
         {/* Add file inline dialog */}
         {showAddDialog && (
@@ -504,9 +511,10 @@ export function InputPane({
             <Plus className="w-6 h-6 text-slate-600" />
             <p className="text-xs text-slate-500">
               {language === 'vi'
-                ? 'Nhấn "Add" để thêm file đầu tiên'
+                ? 'Nhấn "Thêm" để tạo tệp đầu tiên'
                 : 'Click "Add" to add your first file'}
             </p>
+
           </div>
         )}
       </div>

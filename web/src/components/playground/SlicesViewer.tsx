@@ -9,9 +9,11 @@ import { Badge } from '@/components/ui/badge';
 export interface SlicesViewerProps {
   slices: ClientContextSlice[];
   task?: string;
+  language?: 'en' | 'vi';
   emptyMessage?: string;
   className?: string;
 }
+
 
 const STOP_WORDS = new Set([
   // English common stop words
@@ -122,6 +124,7 @@ function LineNumberedSlice({ content, startLine, keywords }: LineNumberedSlicePr
 export function SlicesViewer({
   slices,
   task = '',
+  language = 'en',
   emptyMessage = 'No slices match current budget and relevance criteria.',
   className,
 }: SlicesViewerProps) {
@@ -149,7 +152,9 @@ export function SlicesViewer({
       {keywords.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/20 border border-cyan-800/30 text-[11px] font-mono text-cyan-400">
           <Sparkles className="w-3.5 h-3.5 shrink-0" />
-          <span className="text-slate-400">Highlighted keywords:</span>
+          <span className="text-slate-400">
+            {language === 'vi' ? 'Từ khóa trọng tâm:' : 'Highlighted keywords:'}
+          </span>
           {keywords.slice(0, 5).map((kw) => (
             <span
               key={kw}
@@ -159,10 +164,13 @@ export function SlicesViewer({
             </span>
           ))}
           {keywords.length > 5 && (
-            <span className="text-slate-500">+{keywords.length - 5} more</span>
+            <span className="text-slate-500">
+              +{keywords.length - 5} {language === 'vi' ? 'từ khác' : 'more'}
+            </span>
           )}
         </div>
       )}
+
 
       {slices.map((slice, index) => {
         const isCopied = copiedSliceIndex === index;

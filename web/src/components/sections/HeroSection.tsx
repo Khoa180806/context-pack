@@ -134,7 +134,7 @@ export function HeroSection({ language }: HeroSectionProps) {
                 className="h-7 text-xs font-mono gap-1.5 ml-3 shrink-0"
               >
                 {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copied ? t.copied : 'Copy'}</span>
+                <span>{copied ? t.copied : language === 'vi' ? 'Sao chép' : 'Copy'}</span>
               </Button>
             </div>
           </div>
@@ -144,21 +144,22 @@ export function HeroSection({ language }: HeroSectionProps) {
         <div className="flex flex-wrap items-center justify-center gap-3 pt-4 text-xs font-mono">
           <Badge variant="cyan" className="gap-1.5 py-1">
             <Cpu className="w-3.5 h-3.5" />
-            <span>Pure JS (Zero WASM)</span>
+            <span>{language === 'vi' ? 'Thuần JS (Không cần WASM)' : 'Pure JS (Zero WASM)'}</span>
           </Badge>
           <Badge variant="emerald" className="gap-1.5 py-1">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>42 Tests Passed (100% Green)</span>
+            <span>{language === 'vi' ? '60 Tests Đạt (100% Xanh)' : '60 Tests Passed (100% Green)'}</span>
           </Badge>
           <Badge variant="indigo" className="gap-1.5 py-1">
             <Zap className="w-3.5 h-3.5" />
-            <span>-75.2% Token Reduction</span>
+            <span>{language === 'vi' ? '-75.2% Tiết Kiệm Token' : '-75.2% Token Reduction'}</span>
           </Badge>
           <Badge variant="slate" className="py-1">
-            MIT Licensed
+            {language === 'vi' ? 'Giấy phép MIT' : 'MIT Licensed'}
           </Badge>
         </div>
       </div>
     </section>
+
   );
 }

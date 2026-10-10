@@ -85,7 +85,7 @@ export function Footer({ language, onLanguageToggle }: FooterProps) {
           {/* Ecosystem / Community Links */}
           <div className="space-y-3">
             <div className="font-semibold text-slate-200 text-xs uppercase tracking-wider">
-              Community & Code
+              {t.community}
             </div>
             <ul className="space-y-2 text-slate-400 font-sans text-xs">
               <li>
@@ -96,7 +96,7 @@ export function Footer({ language, onLanguageToggle }: FooterProps) {
                   className="hover:text-cyan-400 transition inline-flex items-center gap-1"
                 >
                   <GitBranch className="w-3.5 h-3.5 text-slate-500" />
-                  <span>GitHub Repository</span>
+                  <span>{t.githubRepo}</span>
                 </a>
               </li>
               <li>
@@ -106,11 +106,11 @@ export function Footer({ language, onLanguageToggle }: FooterProps) {
                   rel="noopener noreferrer"
                   className="hover:text-cyan-400 transition inline-flex items-center gap-1"
                 >
-                  <span>Report an Issue</span>
+                  <span>{t.reportIssue}</span>
                 </a>
               </li>
               <li>
-                <span className="text-slate-500">MIT Open Source</span>
+                <span className="text-slate-500">{t.mitLicense}</span>
               </li>
             </ul>
           </div>
