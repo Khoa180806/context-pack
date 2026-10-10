@@ -7,8 +7,9 @@ on:
     branches: [main, master]
 
 jobs:
-  test:
-    name: Node ${{ matrix.node-version }} on ${{ matrix.os }}
+  # Job 1: Test & verify core CLI and SDK across platforms and Node versions
+  cli-test:
+    name: CLI & SDK (Node ${{ matrix.node-version }} on ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -32,8 +33,39 @@ jobs:
       - name: Type check (Lint)
         run: npm run lint
 
-      - name: Build
+      - name: Build TypeScript
         run: npm run build
 
       - name: Run test suite
         run: npm test
+
+  # Job 2: Test, type check, and build Web Landing Page & Web Playground
+  web-quality:
+    name: Web App Quality & Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install web dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Type check (TypeScript)
+        run: npx tsc --noEmit
+
+      - name: Run in-browser engine unit tests
+        run: npm test
+
+      - name: Build Next.js static production bundle
+        run: npm run build
