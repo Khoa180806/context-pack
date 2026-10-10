@@ -111,7 +111,7 @@ export function useContextPacker({ initialPresetId = 'auth-bug' }: UseContextPac
     }
   }, [task, files, budget, encoding]);
 
-  // Load Preset
+  // Load Preset — E: also clears stale envelope so ResultPane shows idle state
   const loadPreset = useCallback(
     (presetId: string, currentLang: 'en' | 'vi' = 'en') => {
       const preset = PRESET_SCENARIOS.find((p) => p.id === presetId);
@@ -121,6 +121,8 @@ export function useContextPacker({ initialPresetId = 'auth-bug' }: UseContextPac
       setTask(preset.task[currentLang]);
       setBudget(preset.recommendedBudget);
       setActiveFileIndex(0);
+      setEnvelope(null);      // E: clear previous results on scenario switch
+      setErrorMessage(null);
 
       const updatedFiles = preset.files.map((f) => ({
         ...f,
@@ -149,7 +151,7 @@ export function useContextPacker({ initialPresetId = 'auth-bug' }: UseContextPac
     [encoding],
   );
 
-  // A-2: Add a new blank (or pre-filled) file to the virtual file list
+  // A-2: Add a new blank (or pre-filled) file and jump to it
   const addFile = useCallback(
     (name: string, content = '') => {
       const newFile: VirtualFile = {
@@ -158,8 +160,11 @@ export function useContextPacker({ initialPresetId = 'auth-bug' }: UseContextPac
         content,
         tokens: countTokens(content, encoding),
       };
-      setFiles((prev) => [...prev, newFile]);
-      setActiveFileIndex((prev) => prev); // keep current active; user can switch manually
+      setFiles((prev) => {
+        const next = [...prev, newFile];
+        setActiveFileIndex(next.length - 1); // jump to the newly added file
+        return next;
+      });
     },
     [encoding],
   );
