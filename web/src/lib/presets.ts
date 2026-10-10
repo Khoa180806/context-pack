@@ -2,7 +2,7 @@ import type { PresetScenario } from '@/types/playground';
 
 export const PRESET_SCENARIOS: PresetScenario[] = [
   // ─────────────────────────────────────────────────────────────────────────
-  // PRESET 1 — Auth bug: session expiry + JWT blacklist
+  // PRESET 1 — Auth bug: session expiry + JWT blacklist (> 150 lines per file)
   // ─────────────────────────────────────────────────────────────────────────
   {
     id: 'auth-bug',
@@ -18,86 +18,199 @@ export const PRESET_SCENARIOS: PresetScenario[] = [
       en: 'Fix token expiry validation bug: revoked JWT tokens are not being rejected by the auth middleware, causing 200 OK responses instead of 401 Unauthorized on protected routes.',
       vi: 'Sửa lỗi kiểm tra hết hạn token: JWT đã thu hồi không bị từ chối bởi middleware xác thực, dẫn đến phản hồi 200 OK thay vì 401 Unauthorized trên các route được bảo vệ.',
     },
-    recommendedBudget: 2000,
+    recommendedBudget: 2500,
     files: [
       {
         name: 'src/auth/session.ts',
         language: 'typescript',
         content: `/**
- * SessionManager — in-memory session store with TTL and revocation support.
- * Bug: validateSession compares epoch-ms expiry against Date.now() / 1000 (seconds).
+ * SessionManager — Production in-memory session store with TTL, eviction,
+ * telemetry metrics, and multi-tenant session revocation support.
  */
 import crypto from 'crypto';
+import { EventEmitter } from 'events';
 import { isTokenBlacklisted } from './tokenService';
 
 export interface SessionData {
   sessionId: string;
   userId: string;
+  tenantId: string;
   roles: string[];
   expiresAt: number; // Unix epoch milliseconds
   createdAt: number;
+  lastAccessedAt: number;
+  ipAddress?: string;
+  userAgent?: string;
   metadata: Record<string, unknown>;
 }
 
 export interface SessionCreateOptions {
   ttlSeconds?: number;
+  tenantId?: string;
   roles?: string[];
+  ipAddress?: string;
+  userAgent?: string;
   metadata?: Record<string, unknown>;
 }
 
-export class SessionManager {
+export interface SessionStoreMetrics {
+  totalCreated: number;
+  totalRevoked: number;
+  totalExpired: number;
+  currentActive: number;
+}
+
+export class SessionManager extends EventEmitter {
   private readonly activeSessions = new Map<string, SessionData>();
+  private readonly userIndex = new Map<string, Set<string>>();
   private readonly MAX_SESSIONS_PER_USER = 5;
+  private cleanupTimer: NodeJS.Timeout | null = null;
+
+  private metrics: SessionStoreMetrics = {
+    totalCreated: 0,
+    totalRevoked: 0,
+    totalExpired: 0,
+    currentActive: 0,
+  };
+
+  constructor() {
+    super();
+    this.startPeriodicCleanup();
+  }
+
+  public getMetrics(): SessionStoreMetrics {
+    return { ...this.metrics, currentActive: this.activeSessions.size };
+  }
+
+  public setMaxSessionsPerUser(max: number): void {
+    if (max > 0) {
+      (this as any).MAX_SESSIONS_PER_USER = max;
+    }
+  }
+
+  private startPeriodicCleanup(): void {
+    // Run cleanup sweep every 60 seconds
+    this.cleanupTimer = setInterval(() => {
+      this.evictExpiredSessions();
+    }, 60_000);
+    if (this.cleanupTimer.unref) {
+      this.cleanupTimer.unref();
+    }
+  }
+
+  public stopPeriodicCleanup(): void {
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+      this.cleanupTimer = null;
+    }
+  }
+
+  public evictExpiredSessions(): number {
+    const now = Date.now();
+    let evictedCount = 0;
+
+    for (const [sessionId, session] of this.activeSessions.entries()) {
+      if (now > session.expiresAt) {
+        this.activeSessions.delete(sessionId);
+        this.removeFromUserIndex(session.userId, sessionId);
+        this.metrics.totalExpired++;
+        evictedCount++;
+        this.emit('sessionExpired', { sessionId, userId: session.userId });
+      }
+    }
+    return evictedCount;
+  }
 
   public createSession(userId: string, opts: SessionCreateOptions = {}): string {
-    const { ttlSeconds = 3600, roles = ['user'], metadata = {} } = opts;
-    this.pruneUserSessions(userId);
+    const {
+      ttlSeconds = 3600,
+      tenantId = 'default',
+      roles = ['user'],
+      ipAddress,
+      userAgent,
+      metadata = {},
+    } = opts;
 
-    const sessionId = 'sess_' + crypto.randomBytes(16).toString('hex');
+    this.pruneOldestUserSessions(userId);
+
+    const sessionId = 'sess_' + crypto.randomBytes(24).toString('hex');
     const now = Date.now();
-    this.activeSessions.set(sessionId, {
+
+    const session: SessionData = {
       sessionId,
       userId,
+      tenantId,
       roles,
       expiresAt: now + ttlSeconds * 1000,
       createdAt: now,
+      lastAccessedAt: now,
+      ipAddress,
+      userAgent,
       metadata,
-    });
+    };
+
+    this.activeSessions.set(sessionId, session);
+    this.addToUserIndex(userId, sessionId);
+
+    this.metrics.totalCreated++;
+    this.emit('sessionCreated', { sessionId, userId, tenantId });
     return sessionId;
   }
 
   /**
-   * BUG HERE: Date.now() returns milliseconds, but original code compared against
-   * session.expiresAt stored in seconds. Fixed version shown below.
+   * TARGET HOTSPOT: validateSession
+   * Validates active session expiry, updates last access timestamp,
+   * and consults token blacklist service for external revocation.
    */
   public validateSession(sessionId: string): SessionData | null {
     const session = this.activeSessions.get(sessionId);
-    if (!session) return null;
-
-    // Correct comparison: both values must be in the same unit (ms)
-    if (Date.now() > session.expiresAt) {
-      this.activeSessions.delete(sessionId);
+    if (!session) {
       return null;
     }
 
-    // Also reject if the underlying JWT was blacklisted externally
+    const now = Date.now();
+
+    // Check expiry timestamp against current system time (ms)
+    if (now > session.expiresAt) {
+      this.activeSessions.delete(sessionId);
+      this.removeFromUserIndex(session.userId, sessionId);
+      this.metrics.totalExpired++;
+      this.emit('sessionExpired', { sessionId, userId: session.userId });
+      return null;
+    }
+
+    // Critical validation check: consult JWT blacklist
     if (isTokenBlacklisted(sessionId)) {
       this.activeSessions.delete(sessionId);
+      this.removeFromUserIndex(session.userId, sessionId);
+      this.metrics.totalRevoked++;
+      this.emit('sessionRevoked', { sessionId, userId: session.userId, reason: 'blacklisted' });
       return null;
     }
 
+    // Touch access time
+    session.lastAccessedAt = now;
     return session;
   }
 
   public revokeSession(sessionId: string): boolean {
-    return this.activeSessions.delete(sessionId);
+    const session = this.activeSessions.get(sessionId);
+    if (!session) return false;
+
+    this.activeSessions.delete(sessionId);
+    this.removeFromUserIndex(session.userId, sessionId);
+    this.metrics.totalRevoked++;
+    this.emit('sessionRevoked', { sessionId, userId: session.userId, reason: 'explicit' });
+    return true;
   }
 
   public revokeAllUserSessions(userId: string): number {
+    const sessionIds = this.userIndex.get(userId);
+    if (!sessionIds || sessionIds.size === 0) return 0;
+
     let count = 0;
-    for (const [id, sess] of this.activeSessions) {
-      if (sess.userId === userId) {
-        this.activeSessions.delete(id);
+    for (const sessionId of Array.from(sessionIds)) {
+      if (this.revokeSession(sessionId)) {
         count++;
       }
     }
@@ -105,14 +218,40 @@ export class SessionManager {
   }
 
   public getActiveSessions(userId: string): SessionData[] {
-    return Array.from(this.activeSessions.values()).filter((s) => s.userId === userId);
+    const sessionIds = this.userIndex.get(userId);
+    if (!sessionIds) return [];
+
+    const result: SessionData[] = [];
+    for (const sid of sessionIds) {
+      const sess = this.activeSessions.get(sid);
+      if (sess) result.push(sess);
+    }
+    return result;
   }
 
-  private pruneUserSessions(userId: string): void {
+  private addToUserIndex(userId: string, sessionId: string): void {
+    if (!this.userIndex.has(userId)) {
+      this.userIndex.set(userId, new Set());
+    }
+    this.userIndex.get(userId)!.add(sessionId);
+  }
+
+  private removeFromUserIndex(userId: string, sessionId: string): void {
+    const set = this.userIndex.get(userId);
+    if (set) {
+      set.delete(sessionId);
+      if (set.size === 0) this.userIndex.delete(userId);
+    }
+  }
+
+  private pruneOldestUserSessions(userId: string): void {
     const userSessions = this.getActiveSessions(userId);
     if (userSessions.length >= this.MAX_SESSIONS_PER_USER) {
-      const oldest = userSessions.sort((a, b) => a.createdAt - b.createdAt)[0];
-      this.activeSessions.delete(oldest.sessionId);
+      const sorted = userSessions.sort((a, b) => a.createdAt - b.createdAt);
+      const toEvict = sorted.slice(0, userSessions.length - this.MAX_SESSIONS_PER_USER + 1);
+      for (const s of toEvict) {
+        this.revokeSession(s.sessionId);
+      }
     }
   }
 }
@@ -124,67 +263,129 @@ export const sessionManager = new SessionManager();
         name: 'src/auth/tokenService.ts',
         language: 'typescript',
         content: `/**
- * JWT Token Service — sign, verify, refresh, and blacklist management.
- * Uses HS256 signing with configurable secret rotation.
+ * JWT Token Service — Cryptographic signing, verification, token rotation,
+ * and high-performance in-memory revocation blacklist.
  */
 import crypto from 'crypto';
 
+export interface JwtHeader {
+  alg: 'HS256' | 'HS384' | 'HS512';
+  typ: 'JWT';
+  kid?: string;
+}
+
 export interface JwtPayload {
-  sub: string;       // userId
-  iat: number;       // issued-at (epoch seconds)
-  exp: number;       // expiry (epoch seconds)
-  jti: string;       // unique token ID
+  sub: string;         // userId
+  iss?: string;        // issuer
+  aud?: string;        // audience
+  iat: number;         // issued-at (epoch seconds)
+  exp: number;         // expiry (epoch seconds)
+  nbf?: number;        // not-before (epoch seconds)
+  jti: string;         // unique token identifier
   roles: string[];
+  tenantId?: string;
 }
 
 export interface TokenPair {
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
+  tokenType: 'Bearer';
 }
 
-// In-memory blacklist for revoked JTIs — production should use Redis TTL sets
-const revokedJtis = new Set<string>();
+export interface BlacklistEntry {
+  jti: string;
+  revokedAt: number;
+  reason?: string;
+}
 
-const JWT_SECRET = process.env.JWT_SECRET ?? 'dev-secret-change-in-production';
-const ACCESS_TTL_SECONDS = 900;   // 15 minutes
-const REFRESH_TTL_SECONDS = 604800; // 7 days
+// In-memory blacklist for revoked token identifiers
+const revokedJtis = new Map<string, BlacklistEntry>();
+
+const JWT_SECRET = process.env.JWT_SECRET ?? 'dev-secret-change-in-production-key-9988';
+const ACCESS_TTL_SECONDS = 900;       // 15 minutes
+const REFRESH_TTL_SECONDS = 604_800;  // 7 days
+const TOKEN_ISSUER = 'context-pack-auth-service';
 
 function base64url(input: Buffer | string): string {
   const str = typeof input === 'string' ? input : input.toString('base64');
-  return str.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  return str.replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=/g, '');
 }
 
 function hmacSHA256(data: string, secret: string): string {
   return base64url(crypto.createHmac('sha256', secret).update(data).digest('base64'));
 }
 
-export function signToken(userId: string, roles: string[], ttl = ACCESS_TTL_SECONDS): string {
-  const header = base64url(Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })));
-  const payload: JwtPayload = {
-    sub: userId,
-    iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + ttl,
-    jti: crypto.randomUUID(),
-    roles,
-  };
-  const body = base64url(Buffer.from(JSON.stringify(payload)));
-  const sig = hmacSHA256(\`\${header}.\${body}\`, JWT_SECRET);
-  return \`\${header}.\${body}.\${sig}\`;
+export function parseTokenHeader(token: string): JwtHeader | null {
+  try {
+    const [headerB64] = token.split('.');
+    if (!headerB64) return null;
+    return JSON.parse(Buffer.from(headerB64, 'base64url').toString('utf8'));
+  } catch {
+    return null;
+  }
 }
 
+export function signToken(
+  userId: string,
+  roles: string[],
+  ttl: number = ACCESS_TTL_SECONDS,
+  extraPayload: Partial<JwtPayload> = {},
+): string {
+  const header: JwtHeader = { alg: 'HS256', typ: 'JWT' };
+  const nowSec = Math.floor(Date.now() / 1000);
+
+  const payload: JwtPayload = {
+    sub: userId,
+    iss: TOKEN_ISSUER,
+    iat: nowSec,
+    exp: nowSec + ttl,
+    jti: crypto.randomUUID(),
+    roles,
+    ...extraPayload,
+  };
+
+  const headerEncoded = base64url(JSON.stringify(header));
+  const bodyEncoded = base64url(JSON.stringify(payload));
+  const signature = hmacSHA256(\`\${headerEncoded}.\${bodyEncoded}\`, JWT_SECRET);
+
+  return \`\${headerEncoded}.\${bodyEncoded}.\${signature}\`;
+}
+
+/**
+ * TARGET HOTSPOT: verifyToken
+ * Validates cryptographic signature, expiry epoch, and actively checks blacklist.
+ */
 export function verifyToken(token: string): JwtPayload | null {
   try {
-    const [header, body, sig] = token.split('.');
-    if (!header || !body || !sig) return null;
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
 
-    const expectedSig = hmacSHA256(\`\${header}.\${body}\`, JWT_SECRET);
-    if (sig !== expectedSig) return null;
+    const [headerB64, bodyB64, sigB64] = parts;
+    const expectedSig = hmacSHA256(\`\${headerB64}.\${bodyB64}\`, JWT_SECRET);
 
-    const payload: JwtPayload = JSON.parse(Buffer.from(body, 'base64url').toString());
+    // Constant-time comparison prevents timing attacks
+    if (!crypto.timingSafeEqual(Buffer.from(sigB64), Buffer.from(expectedSig))) {
+      return null;
+    }
 
-    if (Math.floor(Date.now() / 1000) > payload.exp) return null;
-    if (revokedJtis.has(payload.jti)) return null;
+    const payload: JwtPayload = JSON.parse(Buffer.from(bodyB64, 'base64url').toString('utf8'));
+    const nowSec = Math.floor(Date.now() / 1000);
+
+    // Validate token expiry timestamp
+    if (nowSec >= payload.exp) {
+      return null;
+    }
+
+    // Validate not-before constraint
+    if (payload.nbf && nowSec < payload.nbf) {
+      return null;
+    }
+
+    // Check if token jti is present in revocation blacklist
+    if (revokedJtis.has(payload.jti)) {
+      return null;
+    }
 
     return payload;
   } catch {
@@ -192,16 +393,39 @@ export function verifyToken(token: string): JwtPayload | null {
   }
 }
 
-export function revokeToken(token: string): boolean {
+/**
+ * TARGET HOTSPOT: revokeToken & isTokenBlacklisted
+ * Explicitly revokes token by adding its jti to the active blacklist map.
+ */
+export function revokeToken(token: string, reason: string = 'manual_revocation'): boolean {
   const payload = verifyToken(token);
-  if (!payload) return false;
-  revokedJtis.add(payload.jti);
+  if (!payload || !payload.jti) return false;
+
+  revokedJtis.set(payload.jti, {
+    jti: payload.jti,
+    revokedAt: Date.now(),
+    reason,
+  });
   return true;
 }
 
-/** Used by SessionManager to check if a session's backing JWT was externally revoked */
 export function isTokenBlacklisted(jti: string): boolean {
   return revokedJtis.has(jti);
+}
+
+export function purgeExpiredBlacklistEntries(): number {
+  let purged = 0;
+  const now = Date.now();
+  // Evict entries older than maximum token refresh lifetime
+  const cutoff = now - REFRESH_TTL_SECONDS * 1000;
+
+  for (const [jti, entry] of revokedJtis.entries()) {
+    if (entry.revokedAt < cutoff) {
+      revokedJtis.delete(jti);
+      purged++;
+    }
+  }
+  return purged;
 }
 
 export function issueTokenPair(userId: string, roles: string[]): TokenPair {
@@ -209,6 +433,7 @@ export function issueTokenPair(userId: string, roles: string[]): TokenPair {
     accessToken: signToken(userId, roles, ACCESS_TTL_SECONDS),
     refreshToken: signToken(userId, roles, REFRESH_TTL_SECONDS),
     expiresIn: ACCESS_TTL_SECONDS,
+    tokenType: 'Bearer',
   };
 }
 `,
@@ -217,174 +442,150 @@ export function issueTokenPair(userId: string, roles: string[]): TokenPair {
         name: 'src/middleware/authGuard.ts',
         language: 'typescript',
         content: `/**
- * Express auth middleware — validates Bearer JWT and injects session into req.
- * Bug: middleware calls sessionManager.validateSession() but does NOT check the
- * return value correctly — passes even when null is returned (missing null check).
+ * Express Authentication Guard & Role-Based Access Control (RBAC) Middleware.
+ * Enforces strict JWT verification, session presence, and revocation defense.
  */
 import type { Request, Response, NextFunction } from 'express';
-import { verifyToken } from '../auth/tokenService';
-import { sessionManager } from '../auth/session';
+import { verifyToken, type JwtPayload } from '../auth/tokenService';
+import { sessionManager, type SessionData } from '../auth/session';
+
+export interface AuthenticatedUser {
+  userId: string;
+  roles: string[];
+  sessionId: string;
+  tenantId?: string;
+  claims: JwtPayload;
+}
 
 declare global {
   namespace Express {
     interface Request {
-      currentUser?: {
-        userId: string;
-        roles: string[];
-        sessionId: string;
-      };
+      currentUser?: AuthenticatedUser;
+      session?: SessionData;
     }
   }
 }
 
-function extractBearerToken(req: Request): string | null {
+export function extractBearerToken(req: Request): string | null {
   const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-  const token = authHeader.slice(7).trim();
+  if (!authHeader) return null;
+
+  const parts = authHeader.split(' ');
+  if (parts.length !== 2 || parts[0].toLowerCase() !== 'bearer') {
+    return null;
+  }
+  const token = parts[1].trim();
   return token.length > 0 ? token : null;
 }
 
+export function logSecurityAudit(event: string, meta: Record<string, unknown>): void {
+  const timestamp = new Date().toISOString();
+  console.info(\`[SECURITY_AUDIT] \${timestamp} - \${event}: \${JSON.stringify(meta)}\`);
+}
+
 /**
- * requireAuth — blocks requests without a valid, non-expired, non-revoked JWT.
+ * TARGET HOTSPOT: requireAuth
+ * Inspects incoming Authorization header, verifies JWT validity,
+ * and ensures session manager does not flag the token as expired or revoked.
  */
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
   const token = extractBearerToken(req);
+
   if (!token) {
-    res.status(401).json({ error: 'Missing or malformed Authorization header' });
+    res.status(401).json({
+      success: false,
+      error: {
+        code: 'UNAUTHORIZED_MISSING_TOKEN',
+        message: 'Missing or malformed Authorization bearer header.',
+      },
+    });
     return;
   }
 
+  // Cryptographic & expiry validation
   const payload = verifyToken(token);
   if (!payload) {
-    res.status(401).json({ error: 'Token is invalid, expired, or revoked' });
+    logSecurityAudit('AUTH_REJECTED_TOKEN_INVALID', { ip: req.ip, path: req.path });
+    res.status(401).json({
+      success: false,
+      error: {
+        code: 'UNAUTHORIZED_INVALID_TOKEN',
+        message: 'Bearer token is invalid, expired, or revoked.',
+      },
+    });
     return;
   }
 
-  // Session-layer check: ensures the session hasn't been evicted server-side
+  // Session-level verification (ensures server-side eviction sync)
   const session = sessionManager.validateSession(payload.jti);
   if (!session) {
-    res.status(401).json({ error: 'Session no longer active — please log in again' });
+    logSecurityAudit('AUTH_REJECTED_SESSION_EVICTED', {
+      userId: payload.sub,
+      jti: payload.jti,
+    });
+    res.status(401).json({
+      success: false,
+      error: {
+        code: 'UNAUTHORIZED_SESSION_REVOKED',
+        message: 'Active user session is expired or terminated.',
+      },
+    });
     return;
   }
 
+  // Inject session credentials into Express context
+  req.session = session;
   req.currentUser = {
     userId: payload.sub,
     roles: payload.roles,
     sessionId: payload.jti,
+    tenantId: payload.tenantId,
+    claims: payload,
   };
 
   next();
 }
 
 /**
- * requireRole — must be used after requireAuth.
+ * Role-Based Access Control (RBAC) Guard
  */
-export function requireRole(...roles: string[]) {
+export function requireRoles(...allowedRoles: string[]) {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.currentUser) {
-      res.status(401).json({ error: 'Unauthenticated' });
+      res.status(401).json({
+        success: false,
+        error: { code: 'UNAUTHORIZED', message: 'Authentication required prior to role check.' },
+      });
       return;
     }
-    const hasRole = roles.some((r) => req.currentUser!.roles.includes(r));
-    if (!hasRole) {
-      res.status(403).json({ error: \`Access denied. Required roles: \${roles.join(', ')}\` });
+
+    const hasPermission = allowedRoles.some((role) => req.currentUser!.roles.includes(role));
+    if (!hasPermission) {
+      logSecurityAudit('RBAC_FORBIDDEN', {
+        userId: req.currentUser.userId,
+        requiredRoles: allowedRoles,
+        userRoles: req.currentUser.roles,
+      });
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN_INSUFFICIENT_ROLE',
+          message: \`Operation requires one of the following roles: \${allowedRoles.join(', ')}\`,
+        },
+      });
       return;
     }
+
     next();
   };
 }
-`,
-      },
-      {
-        name: 'src/routes/authRouter.ts',
-        language: 'typescript',
-        content: `/**
- * Express router — /auth endpoints: login, logout, refresh, whoami.
- */
-import { Router } from 'express';
-import { issueTokenPair, revokeToken, verifyToken } from '../auth/tokenService';
-import { sessionManager } from '../auth/session';
-import { requireAuth } from '../middleware/authGuard';
-
-export const authRouter = Router();
-
-interface LoginBody {
-  username: string;
-  password: string;
-}
-
-// POST /auth/login
-authRouter.post('/login', async (req, res) => {
-  const { username, password } = req.body as LoginBody;
-
-  if (!username || !password) {
-    return res.status(400).json({ error: 'username and password are required' });
-  }
-
-  // Demo: accept any non-empty creds; replace with real DB lookup + bcrypt
-  const userId = \`user_\${Buffer.from(username).toString('hex')}\`;
-  const roles = username === 'admin' ? ['admin', 'user'] : ['user'];
-
-  const tokens = issueTokenPair(userId, roles);
-  const sessionId = sessionManager.createSession(userId, { roles });
-
-  res.json({
-    accessToken: tokens.accessToken,
-    refreshToken: tokens.refreshToken,
-    expiresIn: tokens.expiresIn,
-    sessionId,
-  });
-});
-
-// POST /auth/logout
-authRouter.post('/logout', requireAuth, (req, res) => {
-  const token = req.headers['authorization']!.slice(7);
-  revokeToken(token);
-
-  if (req.currentUser) {
-    sessionManager.revokeSession(req.currentUser.sessionId);
-  }
-
-  res.json({ message: 'Logged out successfully' });
-});
-
-// POST /auth/refresh
-authRouter.post('/refresh', (req, res) => {
-  const { refreshToken } = req.body as { refreshToken: string };
-  if (!refreshToken) {
-    return res.status(400).json({ error: 'refreshToken is required' });
-  }
-
-  const payload = verifyToken(refreshToken);
-  if (!payload) {
-    return res.status(401).json({ error: 'Refresh token is invalid or expired' });
-  }
-
-  const tokens = issueTokenPair(payload.sub, payload.roles);
-  res.json({ accessToken: tokens.accessToken, expiresIn: tokens.expiresIn });
-});
-
-// GET /auth/me
-authRouter.get('/me', requireAuth, (req, res) => {
-  res.json({
-    userId: req.currentUser!.userId,
-    roles: req.currentUser!.roles,
-    sessionId: req.currentUser!.sessionId,
-  });
-});
-
-// DELETE /auth/sessions — revoke all sessions for the current user
-authRouter.delete('/sessions', requireAuth, (req, res) => {
-  const count = sessionManager.revokeAllUserSessions(req.currentUser!.userId);
-  res.json({ message: \`Revoked \${count} session(s)\` });
-});
 `,
       },
     ],
   },
 
   // ─────────────────────────────────────────────────────────────────────────
-  // PRESET 2 — Tokenizer: lazy encoder cache + o200k_base support
+  // PRESET 2 — Tokenizer: lazy encoder cache & benchmark (> 140 lines)
   // ─────────────────────────────────────────────────────────────────────────
   {
     id: 'tokenizer-refactor',
@@ -400,114 +601,84 @@ authRouter.delete('/sessions', requireAuth, (req, res) => {
       en: 'Refactor the tokenizer engine to support o200k_base (GPT-4o) encoding via a lazy singleton cache. The current implementation re-initialises the encoder on every call, causing ~120ms overhead per request. Target: < 2ms after warm-up.',
       vi: 'Tái cấu trúc engine tokenizer để hỗ trợ bảng mã o200k_base (GPT-4o) thông qua lazy singleton cache. Hiện tại, encoder được khởi tạo lại mỗi lần gọi, gây ra overhead ~120ms. Mục tiêu: < 2ms sau lần khởi động đầu tiên.',
     },
-    recommendedBudget: 1800,
+    recommendedBudget: 2200,
     files: [
       {
-        name: 'src/tokenizer/types.ts',
+        name: 'src/tokenizer/cache.ts',
         language: 'typescript',
         content: `/**
- * Shared types for the tokenizer subsystem.
+ * EncoderCache — High-performance lazy-loading singleton cache for tiktoken encoders.
+ *
+ * Problem: getEncoding() from js-tiktoken loads heavy WASM binary tables on first
+ * call (~120ms). Subsequent invocations must reuse singleton instances to guarantee
+ * sub-millisecond execution latency.
  */
+import { getEncoding } from 'js-tiktoken';
 
-export type SupportedEncoding = 'cl100k_base' | 'o200k_base' | 'p50k_base' | 'p50k_edit';
-
-export interface TokenizerOptions {
-  encoding?: SupportedEncoding;
-  /** Truncate input to this many tokens before counting (optional safety cap) */
-  maxInputTokens?: number;
-}
-
-export interface TokenCount {
-  tokens: number;
-  encoding: SupportedEncoding;
-  truncated: boolean;
-  inputLength: number;
-}
-
-export interface BenchmarkResult {
-  encoding: SupportedEncoding;
-  iterations: number;
-  totalMs: number;
-  avgMs: number;
-  minMs: number;
-  maxMs: number;
-  tokensPerSecond: number;
-}
+export type SupportedEncoding = 'cl100k_base' | 'o200k_base' | 'p50k_base' | 'r50k_base';
 
 export interface EncoderCacheEntry {
   encoder: { encode: (text: string) => Uint32Array };
   loadedAt: number;
   hitCount: number;
+  lastAccessed: number;
 }
 
-/** Map of encoding name → model families that use it */
-export const ENCODING_MODEL_MAP: Record<SupportedEncoding, string[]> = {
-  cl100k_base: ['gpt-4', 'gpt-3.5-turbo', 'text-embedding-ada-002'],
-  o200k_base: ['gpt-4o', 'gpt-4o-mini', 'o1', 'o1-mini'],
-  p50k_base: ['text-davinci-003', 'text-davinci-002'],
-  p50k_edit: ['text-davinci-edit-001'],
-};
-`,
-      },
-      {
-        name: 'src/tokenizer/cache.ts',
-        language: 'typescript',
-        content: `/**
- * EncoderCache — lazy-loads and caches tiktoken encoders by name.
- *
- * Problem: getEncoding() from js-tiktoken loads a large WASM binary + BPE vocab
- * on first call (~120ms). Subsequent calls with the same encoding should reuse
- * the instance (< 1ms) instead of re-initialising.
- *
- * This module provides a module-level singleton cache keyed by encoding name.
- */
-import { getEncoding } from 'js-tiktoken';
-import type { SupportedEncoding, EncoderCacheEntry } from './types';
+export interface CacheStatistics {
+  totalHits: number;
+  totalMisses: number;
+  cachedEncodings: SupportedEncoding[];
+}
 
-const cache = new Map<SupportedEncoding, EncoderCacheEntry>();
+const memoryCache = new Map<SupportedEncoding, EncoderCacheEntry>();
+let cacheHits = 0;
+let cacheMisses = 0;
+
+export function getCacheStatistics(): CacheStatistics {
+  return {
+    totalHits: cacheHits,
+    totalMisses: cacheMisses,
+    cachedEncodings: Array.from(memoryCache.keys()),
+  };
+}
 
 /**
- * Get (or load) an encoder for the given encoding.
- * Thread-safe for single-threaded JS environments; Node.js Worker threads
- * each maintain their own cache — this is intentional (avoids SharedArrayBuffer).
+ * TARGET HOTSPOT: getEncoder
+ * Lazy initializes tokenizer encoders and caches instances in-memory.
  */
 export function getEncoder(encoding: SupportedEncoding): EncoderCacheEntry['encoder'] {
-  const cached = cache.get(encoding);
+  const cached = memoryCache.get(encoding);
+  const now = Date.now();
+
   if (cached) {
     cached.hitCount++;
+    cached.lastAccessed = now;
+    cacheHits++;
     return cached.encoder;
   }
 
+  // Cache miss: initialize encoder instance
+  cacheMisses++;
   const encoder = getEncoding(encoding);
-  cache.set(encoding, {
+
+  memoryCache.set(encoding, {
     encoder,
-    loadedAt: Date.now(),
+    loadedAt: now,
     hitCount: 0,
+    lastAccessed: now,
   });
+
   return encoder;
 }
 
-/** Evict a specific encoder (useful for testing or forced reload). */
 export function evictEncoder(encoding: SupportedEncoding): boolean {
-  return cache.delete(encoding);
+  return memoryCache.delete(encoding);
 }
 
-/** Evict all cached encoders and free WASM memory. */
 export function clearEncoderCache(): void {
-  cache.clear();
-}
-
-/** Diagnostic info — helpful for observability. */
-export function getCacheStats(): Array<{
-  encoding: SupportedEncoding;
-  loadedAt: number;
-  hitCount: number;
-}> {
-  return Array.from(cache.entries()).map(([enc, entry]) => ({
-    encoding: enc,
-    loadedAt: entry.loadedAt,
-    hitCount: entry.hitCount,
-  }));
+  memoryCache.clear();
+  cacheHits = 0;
+  cacheMisses = 0;
 }
 `,
       },
@@ -515,38 +686,55 @@ export function getCacheStats(): Array<{
         name: 'src/tokenizer/engine.ts',
         language: 'typescript',
         content: `/**
- * Public tokenizer API — wraps the encoder cache with validation,
- * truncation support, and structured return types.
+ * Public Tokenizer Engine — Wraps cached encoders with input validation,
+ * bounds checking, and token slicing estimators.
  */
-import { getEncoder } from './cache';
-import type { SupportedEncoding, TokenizerOptions, TokenCount } from './types';
+import { getEncoder, type SupportedEncoding } from './cache';
+
+export interface TokenCountResult {
+  tokens: number;
+  encoding: SupportedEncoding;
+  truncated: boolean;
+  inputLength: number;
+  durationMs: number;
+}
+
+export interface TokenizerOptions {
+  encoding?: SupportedEncoding;
+  maxInputTokens?: number;
+}
 
 const VALID_ENCODINGS = new Set<SupportedEncoding>([
   'cl100k_base',
   'o200k_base',
   'p50k_base',
-  'p50k_edit',
+  'r50k_base',
 ]);
 
-export function isValidEncoding(enc: string): enc is SupportedEncoding {
-  return VALID_ENCODINGS.has(enc as SupportedEncoding);
+export function isValidEncoding(encoding: string): encoding is SupportedEncoding {
+  return VALID_ENCODINGS.has(encoding as SupportedEncoding);
 }
 
 /**
- * Count tokens in \`text\` using the specified encoding.
- * Returns a structured result with optional truncation info.
+ * TARGET HOTSPOT: countTokens
+ * Main entry point for token counting operations.
  */
-export function countTokens(text: string, opts: TokenizerOptions = {}): TokenCount {
+export function countTokens(text: string, opts: TokenizerOptions = {}): TokenCountResult {
+  const startTime = performance.now();
   const { encoding = 'cl100k_base', maxInputTokens } = opts;
 
   if (!isValidEncoding(encoding)) {
-    throw new TypeError(
-      \`Unsupported encoding "\${encoding}". Valid options: \${[...VALID_ENCODINGS].join(', ')}\`,
-    );
+    throw new TypeError(\`Unsupported encoding "\${encoding}". Valid options: \${[...VALID_ENCODINGS].join(', ')}\`);
   }
 
-  if (!text) {
-    return { tokens: 0, encoding, truncated: false, inputLength: 0 };
+  if (!text || text.length === 0) {
+    return {
+      tokens: 0,
+      encoding,
+      truncated: false,
+      inputLength: 0,
+      durationMs: 0,
+    };
   }
 
   const encoder = getEncoder(encoding);
@@ -559,108 +747,15 @@ export function countTokens(text: string, opts: TokenizerOptions = {}): TokenCou
     truncated = true;
   }
 
+  const durationMs = performance.now() - startTime;
+
   return {
     tokens: encoded.length,
     encoding,
     truncated,
     inputLength: originalLength,
+    durationMs: parseFloat(durationMs.toFixed(3)),
   };
-}
-
-/**
- * Convenience overload that returns just the token count integer.
- * Matches the legacy \`countTokens(text, encoding)\` call signature.
- */
-export function countTokensSimple(text: string, encoding: SupportedEncoding = 'cl100k_base'): number {
-  return countTokens(text, { encoding }).tokens;
-}
-
-/**
- * Estimate tokens without loading the full encoder — fast approximation
- * using the ~4 chars/token heuristic. Only use for rough UI previews.
- */
-export function estimateTokens(text: string): number {
-  return Math.ceil(text.length / 4);
-}
-
-export function getAvailableEncodings(): SupportedEncoding[] {
-  return Array.from(VALID_ENCODINGS);
-}
-`,
-      },
-      {
-        name: 'src/tokenizer/benchmark.ts',
-        language: 'typescript',
-        content: `/**
- * Tokenizer benchmark suite — measures cold-start and warm cache latency
- * across all supported encodings. Run with: npx tsx src/tokenizer/benchmark.ts
- */
-import { countTokens } from './engine';
-import { clearEncoderCache, getCacheStats } from './cache';
-import type { SupportedEncoding, BenchmarkResult } from './types';
-
-const ENCODINGS: SupportedEncoding[] = ['cl100k_base', 'o200k_base', 'p50k_base'];
-
-const SAMPLE_TEXTS = [
-  'Context Pack provides zero-WASM pure JS deterministic token slicing for LLM context windows.',
-  'function authenticate(token: string): Promise<User | null> { return verifyJwt(token); }',
-  'The quick brown fox jumps over the lazy dog. Pack context, not clutter.',
-];
-
-async function benchmarkEncoding(
-  encoding: SupportedEncoding,
-  iterations: number,
-  text: string,
-): Promise<BenchmarkResult> {
-  const times: number[] = [];
-
-  for (let i = 0; i < iterations; i++) {
-    const t0 = performance.now();
-    countTokens(text, { encoding });
-    times.push(performance.now() - t0);
-  }
-
-  const total = times.reduce((a, b) => a + b, 0);
-  const tokens = countTokens(text, { encoding }).tokens;
-
-  return {
-    encoding,
-    iterations,
-    totalMs: parseFloat(total.toFixed(3)),
-    avgMs: parseFloat((total / iterations).toFixed(3)),
-    minMs: parseFloat(Math.min(...times).toFixed(3)),
-    maxMs: parseFloat(Math.max(...times).toFixed(3)),
-    tokensPerSecond: Math.round((tokens * iterations) / (total / 1000)),
-  };
-}
-
-export async function runFullBenchmark(iterations = 500): Promise<BenchmarkResult[]> {
-  const results: BenchmarkResult[] = [];
-  const text = SAMPLE_TEXTS.join(' ');
-
-  console.log(\`\\nTokenizer Benchmark — \${iterations} iterations per encoding\`);
-  console.log('='.repeat(60));
-
-  for (const encoding of ENCODINGS) {
-    // Cold start
-    clearEncoderCache();
-    const coldResult = await benchmarkEncoding(encoding, 1, text);
-    console.log(\`[COLD] \${encoding}: \${coldResult.avgMs}ms\`);
-
-    // Warm cache
-    const warmResult = await benchmarkEncoding(encoding, iterations, text);
-    console.log(\`[WARM] \${encoding}: avg \${warmResult.avgMs}ms | \${warmResult.tokensPerSecond} tok/s\`);
-
-    results.push(warmResult);
-  }
-
-  console.log('\\nCache stats:', getCacheStats());
-  return results;
-}
-
-// Run when executed directly
-if (process.argv[1] === import.meta.url.slice(7)) {
-  runFullBenchmark(500).catch(console.error);
 }
 `,
       },
@@ -668,7 +763,7 @@ if (process.argv[1] === import.meta.url.slice(7)) {
   },
 
   // ─────────────────────────────────────────────────────────────────────────
-  // PRESET 3 — CLI: argument parsing, validation, structured exit codes
+  // PRESET 3 — CLI Parser: options & validation (> 150 lines)
   // ─────────────────────────────────────────────────────────────────────────
   {
     id: 'cli-config',
@@ -684,15 +779,17 @@ if (process.argv[1] === import.meta.url.slice(7)) {
       en: 'Add strict validation for the --files flag: missing, empty, or non-existent paths must emit a structured JSON error (when --json) or a colored stderr message (default), and exit with code 2. Currently the CLI silently continues with an empty file list.',
       vi: 'Thêm kiểm tra chặt chẽ cho cờ --files: đường dẫn thiếu, rỗng hoặc không tồn tại phải phát ra lỗi JSON có cấu trúc (khi dùng --json) hoặc thông báo stderr có màu (mặc định), và thoát với mã 2. Hiện tại CLI âm thầm tiếp tục với danh sách file rỗng.',
     },
-    recommendedBudget: 1900,
+    recommendedBudget: 2200,
     files: [
       {
-        name: 'src/cli/options.ts',
+        name: 'src/cli/validator.ts',
         language: 'typescript',
         content: `/**
- * CLI flag definitions, parser, and default values.
- * Supports both short (-t, -f, -b) and long (--task, --files, --budget) forms.
+ * CLI Input Validator — Strict sanity checks for flags, file existence,
+ * integer token limits, and compliance with the POSIX error specification.
  */
+import fs from 'fs';
+import path from 'path';
 
 export interface CliFlags {
   task?: string;
@@ -700,94 +797,7 @@ export interface CliFlags {
   budget?: number;
   encoding?: string;
   json?: boolean;
-  verbose?: boolean;
-  version?: boolean;
-  help?: boolean;
 }
-
-export interface ParseResult {
-  flags: CliFlags;
-  positionals: string[];
-  unknown: string[];
-}
-
-const SUPPORTED_FLAGS: Record<string, keyof CliFlags> = {
-  '-t': 'task',
-  '--task': 'task',
-  '-f': 'files',
-  '--files': 'files',
-  '-b': 'budget',
-  '--budget': 'budget',
-  '-e': 'encoding',
-  '--encoding': 'encoding',
-  '--json': 'json',
-  '-v': 'verbose',
-  '--verbose': 'verbose',
-  '--version': 'version',
-  '-h': 'help',
-  '--help': 'help',
-};
-
-const BOOLEAN_FLAGS = new Set(['--json', '-v', '--verbose', '--version', '-h', '--help']);
-
-export function parseCliArguments(argv: string[]): ParseResult {
-  const flags: CliFlags = {};
-  const positionals: string[] = [];
-  const unknown: string[] = [];
-
-  for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i];
-    const flagKey = SUPPORTED_FLAGS[arg];
-
-    if (!flagKey) {
-      if (arg.startsWith('-')) {
-        unknown.push(arg);
-      } else {
-        positionals.push(arg);
-      }
-      continue;
-    }
-
-    if (BOOLEAN_FLAGS.has(arg)) {
-      (flags as Record<string, unknown>)[flagKey] = true;
-      continue;
-    }
-
-    const value = argv[++i];
-    if (value === undefined) {
-      unknown.push(arg);
-      continue;
-    }
-
-    if (flagKey === 'files') {
-      flags.files = value.split(',').map((f) => f.trim()).filter(Boolean);
-    } else if (flagKey === 'budget') {
-      const parsed = parseInt(value, 10);
-      flags.budget = isNaN(parsed) ? undefined : parsed;
-    } else {
-      (flags as Record<string, unknown>)[flagKey] = value;
-    }
-  }
-
-  return { flags, positionals, unknown };
-}
-
-export const DEFAULTS = {
-  budget: 4000,
-  encoding: 'cl100k_base',
-} as const;
-`,
-      },
-      {
-        name: 'src/cli/validator.ts',
-        language: 'typescript',
-        content: `/**
- * CLI input validator — checks required flags, value ranges, and file existence.
- * Returns structured ValidationError[] so the caller decides how to render them.
- */
-import fs from 'fs';
-import path from 'path';
-import type { CliFlags } from './options';
 
 export interface ValidationError {
   field: string;
@@ -795,30 +805,31 @@ export interface ValidationError {
   message: string;
 }
 
+export const VALID_ENCODINGS = ['cl100k_base', 'o200k_base', 'p50k_base', 'r50k_base'];
+
+/**
+ * TARGET HOTSPOT: validateFlags
+ * Evaluates provided CLI options against business rules and produces
+ * a structured array of validation errors for terminal or JSON formatting.
+ */
 export function validateFlags(flags: CliFlags): ValidationError[] {
   const errors: ValidationError[] = [];
 
-  // --task is required
+  // Validate task argument
   if (!flags.task || !flags.task.trim()) {
     errors.push({
       field: '--task / -t',
       code: 'MISSING_REQUIRED',
       message: 'Task description is required. Provide it with -t "<task>".',
     });
-  } else if (flags.task.length > 2000) {
-    errors.push({
-      field: '--task / -t',
-      code: 'VALUE_TOO_LONG',
-      message: \`Task description exceeds 2000 characters (\${flags.task.length} given).\`,
-    });
   }
 
-  // --files is required and must be non-empty
+  // Validate files argument
   if (!flags.files || flags.files.length === 0) {
     errors.push({
       field: '--files / -f',
       code: 'MISSING_REQUIRED',
-      message: 'At least one source file is required. Provide it with -f "path/to/file".',
+      message: 'At least one target file is required. Provide it with -f "path/to/file".',
     });
   } else {
     for (const filePath of flags.files) {
@@ -827,228 +838,31 @@ export function validateFlags(flags: CliFlags): ValidationError[] {
         errors.push({
           field: '--files / -f',
           code: 'FILE_NOT_FOUND',
-          message: \`File not found: \${filePath} (resolved: \${resolved})\`,
+          message: \`File not found: \${filePath} (resolved path: \${resolved})\`,
         });
-      } else {
-        const stat = fs.statSync(resolved);
-        if (stat.isDirectory()) {
-          errors.push({
-            field: '--files / -f',
-            code: 'PATH_IS_DIRECTORY',
-            message: \`Expected a file but got a directory: \${filePath}\`,
-          });
-        }
       }
     }
   }
 
-  // --budget range check
+  // Validate budget range
   if (flags.budget !== undefined) {
     if (flags.budget < 100) {
       errors.push({
         field: '--budget / -b',
-        code: 'VALUE_OUT_OF_RANGE',
-        message: \`Budget must be at least 100 tokens (got \${flags.budget}).\`,
+        code: 'VALUE_TOO_SMALL',
+        message: \`Budget of \${flags.budget} is below the 100 token minimum.\`,
       });
     }
-    if (flags.budget > 200000) {
+    if (flags.budget > 200_000) {
       errors.push({
         field: '--budget / -b',
-        code: 'VALUE_OUT_OF_RANGE',
-        message: \`Budget exceeds maximum of 200,000 tokens (got \${flags.budget}).\`,
+        code: 'VALUE_TOO_LARGE',
+        message: \`Budget of \${flags.budget} exceeds maximum allowed limit of 200,000 tokens.\`,
       });
     }
-  }
-
-  // --encoding whitelist
-  const VALID_ENCODINGS = ['cl100k_base', 'o200k_base', 'p50k_base', 'p50k_edit'];
-  if (flags.encoding && !VALID_ENCODINGS.includes(flags.encoding)) {
-    errors.push({
-      field: '--encoding / -e',
-      code: 'INVALID_VALUE',
-      message: \`Unknown encoding "\${flags.encoding}". Valid: \${VALID_ENCODINGS.join(', ')}\`,
-    });
   }
 
   return errors;
-}
-`,
-      },
-      {
-        name: 'src/cli/formatter.ts',
-        language: 'typescript',
-        content: `/**
- * CLI output formatting — colored stderr for human mode, JSON for --json mode.
- * Exit codes: 0 = success, 1 = runtime error, 2 = user input error.
- */
-import type { ValidationError } from './validator';
-
-// ANSI escape codes (compatible with most modern terminals)
-const ESC = '\x1b';
-const RESET = \`\${ESC}[0m\`;
-const BOLD = \`\${ESC}[1m\`;
-const DIM = \`\${ESC}[2m\`;
-const RED = \`\${ESC}[31m\`;
-const YELLOW = \`\${ESC}[33m\`;
-const CYAN = \`\${ESC}[36m\`;
-const GREEN = \`\${ESC}[32m\`;
-
-export const colors = {
-  error: (s: string) => \`\${BOLD}\${RED}\${s}\${RESET}\`,
-  warn: (s: string) => \`\${YELLOW}\${s}\${RESET}\`,
-  info: (s: string) => \`\${CYAN}\${s}\${RESET}\`,
-  success: (s: string) => \`\${GREEN}\${s}\${RESET}\`,
-  dim: (s: string) => \`\${DIM}\${s}\${RESET}\`,
-  bold: (s: string) => \`\${BOLD}\${s}\${RESET}\`,
-};
-
-export interface StructuredError {
-  ok: false;
-  error: {
-    code: string;
-    message: string;
-    fields?: ValidationError[];
-  };
-}
-
-export function formatValidationErrors(
-  errors: ValidationError[],
-  asJson: boolean,
-): { output: string; exitCode: 2 } {
-  if (asJson) {
-    const structured: StructuredError = {
-      ok: false,
-      error: {
-        code: 'VALIDATION_ERROR',
-        message: \`\${errors.length} validation error(s) found\`,
-        fields: errors,
-      },
-    };
-    return { output: JSON.stringify(structured, null, 2), exitCode: 2 };
-  }
-
-  const lines = [
-    colors.error(\`✖  \${errors.length} error(s) found:\`),
-    '',
-    ...errors.map((e, i) =>
-      [
-        colors.bold(\`  [\${i + 1}] \${e.field}\`),
-        \`      \${colors.dim(e.code)}  \${e.message}\`,
-      ].join('\\n'),
-    ),
-    '',
-    colors.dim('  Run with --help for usage information.'),
-  ];
-
-  return { output: lines.join('\\n'), exitCode: 2 };
-}
-
-export function formatRuntimeError(err: unknown, asJson: boolean): { output: string; exitCode: 1 } {
-  const message = err instanceof Error ? err.message : String(err);
-
-  if (asJson) {
-    return {
-      output: JSON.stringify({ ok: false, error: { code: 'RUNTIME_ERROR', message } }, null, 2),
-      exitCode: 1,
-    };
-  }
-
-  return { output: colors.error(\`✖  Runtime error: \${message}\`), exitCode: 1 };
-}
-
-export function printHelp(name = 'cx'): void {
-  console.log(\`
-\${colors.bold(\`\${name}\`)} — AI Context Pack CLI
-
-\${colors.bold('USAGE')}
-  \${name} -t <task> -f <files> [options]
-
-\${colors.bold('OPTIONS')}
-  -t, --task      \${colors.dim('Required')}  Task description for the AI agent
-  -f, --files     \${colors.dim('Required')}  Comma-separated list of source files
-  -b, --budget    \${colors.dim('[4000]')}    Token budget (100–200,000)
-  -e, --encoding  \${colors.dim('[cl100k]')} Tokenizer encoding
-      --json                Output structured JSON envelope
-  -v, --verbose             Verbose logging
-      --version             Print version and exit
-  -h, --help                Show this help
-
-\${colors.bold('EXIT CODES')}
-  0  Success
-  1  Runtime / unexpected error
-  2  Invalid user input (bad flags, missing files)
-\`);
-}
-`,
-      },
-      {
-        name: 'src/cli/main.ts',
-        language: 'typescript',
-        content: `/**
- * CLI entry point — orchestrates parsing, validation, and execution.
- * Imported by bin/cx.js which sets process.argv.
- */
-import { parseCliArguments, DEFAULTS } from './options';
-import { validateFlags } from './validator';
-import { formatValidationErrors, formatRuntimeError, printHelp } from './formatter';
-
-const VERSION = '0.1.1';
-
-export async function runCli(argv: string[] = process.argv.slice(2)): Promise<void> {
-  const { flags, unknown } = parseCliArguments(argv);
-
-  // --version
-  if (flags.version) {
-    console.log(VERSION);
-    process.exit(0);
-  }
-
-  // --help
-  if (flags.help || argv.length === 0) {
-    printHelp();
-    process.exit(0);
-  }
-
-  // Warn about unrecognised flags
-  if (unknown.length > 0 && flags.verbose) {
-    console.warn(\`Warning: unknown flags ignored: \${unknown.join(', ')}\`);
-  }
-
-  // Apply defaults
-  flags.budget = flags.budget ?? DEFAULTS.budget;
-  flags.encoding = flags.encoding ?? DEFAULTS.encoding;
-
-  // Validate
-  const errors = validateFlags(flags);
-  if (errors.length > 0) {
-    const { output, exitCode } = formatValidationErrors(errors, flags.json ?? false);
-    process.stderr.write(output + '\\n');
-    process.exit(exitCode);
-  }
-
-  // Execute pack
-  try {
-    // Dynamic import to avoid loading heavy engine at startup (lazy load)
-    const { packFiles } = await import('../packer');
-    const result = await packFiles({
-      task: flags.task!,
-      files: flags.files!,
-      budget: flags.budget,
-      encoding: flags.encoding as 'cl100k_base' | 'o200k_base',
-    });
-
-    if (flags.json) {
-      process.stdout.write(JSON.stringify(result, null, 2) + '\\n');
-    } else {
-      console.log(\`Packed \${result.data.slices.length} slice(s) — \${result.data.used_tokens} tokens used\`);
-    }
-
-    process.exit(0);
-  } catch (err) {
-    const { output, exitCode } = formatRuntimeError(err, flags.json ?? false);
-    process.stderr.write(output + '\\n');
-    process.exit(exitCode);
-  }
 }
 `,
       },
@@ -1056,7 +870,7 @@ export async function runCli(argv: string[] = process.argv.slice(2)): Promise<vo
   },
 
   // ─────────────────────────────────────────────────────────────────────────
-  // PRESET 4 — Custom (sentinel): blank canvas for user's own files
+  // PRESET 4 — Custom
   // ─────────────────────────────────────────────────────────────────────────
   {
     id: 'custom',
@@ -1072,7 +886,7 @@ export async function runCli(argv: string[] = process.argv.slice(2)): Promise<vo
       en: '',
       vi: '',
     },
-    recommendedBudget: 2000,
-    files: [], // intentionally empty — user builds their own file set
+    recommendedBudget: 2500,
+    files: [],
   },
 ];
