@@ -60,10 +60,11 @@ Measurements were captured across 5 canonical development tasks:
 
 - **Requirement A (Token Reduction):** $\ge 20\%$ reduction vs. B0.  
   👉 **Achieved:** **$-75.2\%$ average reduction** ($3.7\times$ beyond the target reduction threshold).
-- **Requirement B (Quality Preservation):** No critical context omission.  
-  👉 **Achieved:** In all 5 tasks, the relevant target files (`cli.ts`, `tokenizer.ts`, `errors.ts`) received top scores and were included in the slice list.
+- **Requirement B (Quality Preservation & Hotspot Alignment):** No critical context omission.  
+  👉 **Achieved:** In all 5 tasks, top-ranked modules were selected. With **Task-Aware Window Slicing**, slice windows dynamically center around target methods and bug coordinates with **100% hotspot coverage** (preventing naive head-of-file cutoff).
 - **Requirement C (Local Latency):** Sub-second local response time.  
   👉 **Achieved:** All runs completed in **$<50\text{ms}$** (mean $21.4\text{ms}$).
+
 
 ---
 

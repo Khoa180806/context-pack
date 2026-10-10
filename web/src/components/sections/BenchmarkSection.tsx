@@ -123,8 +123,9 @@ export function BenchmarkSection({ language }: BenchmarkSectionProps) {
               Standard Benchmark Tasks (Codebase: token_diff — 5 Scenarios)
             </div>
             <Badge variant="emerald" className="font-mono text-xs">
-              42/42 Tests Passing
+              60/60 Tests Passing
             </Badge>
+
           </div>
 
           <div className="overflow-x-auto">

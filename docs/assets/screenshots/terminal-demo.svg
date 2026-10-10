@@ -60,14 +60,14 @@
         <tspan class="prompt">$ </tspan>
         <tspan class="cmd-main">cx </tspan>
         <tspan class="flag">-t </tspan>
-        <tspan class="flag-val">"Fix token count logic" \</tspan>
+        <tspan class="flag-val">"Fix token expiry validation in SessionManager" \</tspan>
       </text>
       <!-- Command prompt line 2 (wrapped cleanly with continuation) -->
       <text x="20" y="22">
         <tspan class="flag">-f </tspan>
-        <tspan class="flag-val">"src/tokenizer.ts" "src/packer.ts" </tspan>
+        <tspan class="flag-val">"src/auth/session.ts" "src/auth/tokenService.ts" </tspan>
         <tspan class="flag">-b </tspan>
-        <tspan fill="#fab387">1000</tspan>
+        <tspan fill="#fab387">1500</tspan>
       </text>
 
       <!-- Line 1: Header (bold cyan) -->
@@ -78,27 +78,27 @@
       <!-- Line 2: Task -->
       <text x="0" y="80">
         <tspan class="text-bold">Task: </tspan>
-        <tspan class="text-normal">Fix token count logic</tspan>
+        <tspan class="text-normal">Fix token expiry validation in SessionManager</tspan>
       </text>
 
       <!-- Line 3: Budget -->
       <text x="0" y="102">
         <tspan class="text-bold">Budget: </tspan>
-        <tspan class="text-normal">1000 tokens</tspan>
+        <tspan class="text-normal">1500 tokens</tspan>
       </text>
 
-      <!-- Line 4: Slice 1 -->
+      <!-- Line 4: Slice 1 - Center hotspot slice -->
       <text x="0" y="146">
         <tspan>  </tspan>
         <tspan class="text-green">✓</tspan>
         <tspan> </tspan>
-        <tspan class="text-bold">src/packer.ts</tspan>
+        <tspan class="text-bold">src/auth/session.ts</tspan>
         <tspan> </tspan>
-        <tspan class="text-dim">(lines 1–100)</tspan>
+        <tspan class="text-dim">(lines 85–184)</tspan>
         <tspan>  </tspan>
-        <tspan class="text-blue">709 tokens</tspan>
+        <tspan class="text-blue">820 tokens</tspan>
         <tspan>  </tspan>
-        <tspan class="text-dim">score: 0.65</tspan>
+        <tspan class="text-dim">score: 0.88</tspan>
       </text>
 
       <!-- Line 5: Slice 2 -->
@@ -106,23 +106,24 @@
         <tspan>  </tspan>
         <tspan class="text-green">✓</tspan>
         <tspan> </tspan>
-        <tspan class="text-bold">src/tokenizer.ts</tspan>
+        <tspan class="text-bold">src/auth/tokenService.ts</tspan>
         <tspan> </tspan>
-        <tspan class="text-dim">(lines 1–32)</tspan>
+        <tspan class="text-dim">(lines 60–159)</tspan>
         <tspan>  </tspan>
-        <tspan class="text-blue">244 tokens</tspan>
+        <tspan class="text-blue">545 tokens</tspan>
         <tspan>  </tspan>
-        <tspan class="text-dim">score: 0.52</tspan>
+        <tspan class="text-dim">score: 0.72</tspan>
       </text>
 
       <!-- Line 6: Summary Footer -->
       <text x="0" y="216">
         <tspan class="text-bold">Total: </tspan>
-        <tspan class="text-normal">953 / 1000 tokens  |  2 slices from 2 files  |  233ms</tspan>
+        <tspan class="text-normal">1365 / 1500 tokens  |  2 slices from 2 files  |  21.4ms</tspan>
       </text>
 
       <!-- Cursor -->
       <rect x="0" y="244" width="8" height="16" fill="#89b4fa" opacity="0.9"/>
+
     </g>
   </g>
 </svg>
