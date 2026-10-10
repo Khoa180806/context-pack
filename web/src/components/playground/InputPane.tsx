@@ -53,14 +53,21 @@ export interface InputPaneProps {
 
 interface LineNumberedEditorProps {
   value: string;
+  activeFileName?: string;
   onChange: (val: string) => void;
   rows?: number;
 }
 
-function LineNumberedEditor({ value, onChange, rows = 12 }: LineNumberedEditorProps) {
+function LineNumberedEditor({ value, activeFileName, onChange, rows = 12 }: LineNumberedEditorProps) {
   const gutterRef = React.useRef<HTMLDivElement>(null);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const lineCount = value.split('\n').length;
+
+  // Reset scroll to top when active file changes
+  React.useEffect(() => {
+    if (textareaRef.current) textareaRef.current.scrollTop = 0;
+    if (gutterRef.current) gutterRef.current.scrollTop = 0;
+  }, [activeFileName]);
 
   // Sync gutter scroll position with textarea scroll
   const handleScroll = () => {
@@ -99,6 +106,7 @@ function LineNumberedEditor({ value, onChange, rows = 12 }: LineNumberedEditorPr
     </div>
   );
 }
+
 
 // ─── AddFileDialog ────────────────────────────────────────────────────────────
 // Inline "new file" prompt — appears as an input row above the file list.
@@ -321,7 +329,16 @@ export function InputPane({
             </>
           )}
         </button>
+
+        {(!task.trim() || files.length === 0) && (
+          <p className="text-[11px] text-amber-400/80 text-center font-mono">
+            {language === 'vi'
+              ? 'Nhập prompt và thêm ít nhất 1 file để kích hoạt đóng gói'
+              : 'Enter a task prompt and provide at least 1 file to pack'}
+          </p>
+        )}
       </div>
+
 
       {/* ── 3. Budget & Encoding ─────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-xl bg-slate-900/60 border border-slate-800">
@@ -473,9 +490,11 @@ export function InputPane({
             {/* Twin-scroll editor with line numbers */}
             <LineNumberedEditor
               value={activeFile.content}
+              activeFileName={activeFile.name}
               onChange={(val) => onFileContentChange(activeFileIndex, val)}
               rows={12}
             />
+
           </div>
         )}
 

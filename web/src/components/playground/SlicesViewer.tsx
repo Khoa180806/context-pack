@@ -14,18 +14,25 @@ export interface SlicesViewerProps {
 }
 
 const STOP_WORDS = new Set([
+  // English common stop words
   'the', 'is', 'at', 'which', 'on', 'for', 'in', 'a', 'an', 'to', 'and', 'or',
   'of', 'with', 'by', 'from', 'as', 'into', 'not', 'that', 'this', 'it', 'be',
   'are', 'was', 'were', 'been', 'will', 'would', 'should', 'can', 'could', 'has',
   'have', 'had', 'does', 'did', 'do', 'but', 'if', 'when', 'than', 'then',
   'fix', 'bug', 'issue', 'causing', 'instead',
+  // Vietnamese common stop words
+  'và', 'hoặc', 'của', 'với', 'cho', 'trong', 'trên', 'tại', 'bởi', 'từ', 'vào',
+  'là', 'được', 'bị', 'không', 'có', 'khi', 'nếu', 'thì', 'mà', 'các', 'những',
+  'sửa', 'lỗi', 'thay', 'vì', 'dẫn', 'đến', 'này', 'đó',
 ]);
 
 function extractKeywords(task: string): string[] {
   if (!task) return [];
-  const matches = task.toLowerCase().match(/[a-z0-9_]{3,}/g) ?? [];
+  // Match English code identifiers and Unicode words (3+ chars)
+  const matches = task.toLowerCase().match(/[\p{L}0-9_]{3,}/gu) ?? [];
   return Array.from(new Set(matches)).filter((w) => !STOP_WORDS.has(w));
 }
+
 
 function escapeRegex(string: string): string {
   return string.replace(/[/\-\\^$*+?.()|[\]{}]/g, '\\$&');

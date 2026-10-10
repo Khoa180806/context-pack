@@ -869,9 +869,6 @@ export function validateFlags(flags: CliFlags): ValidationError[] {
     ],
   },
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // PRESET 4 — Custom
-  // ─────────────────────────────────────────────────────────────────────────
   {
     id: 'custom',
     title: {
@@ -883,10 +880,36 @@ export function validateFlags(flags: CliFlags): ValidationError[] {
       vi: 'Dán code của bạn và nhập prompt theo nhu cầu riêng.',
     },
     task: {
-      en: '',
-      vi: '',
+      en: 'Refactor user profile service and optimize database queries',
+      vi: 'Tái cấu trúc dịch vụ hồ sơ người dùng và tối ưu truy vấn cơ sở dữ liệu',
     },
     recommendedBudget: 2500,
-    files: [],
+    files: [
+      {
+        name: 'src/example.ts',
+        language: 'typescript',
+        content: `/**
+ * Example Custom File — Paste or edit your own code here.
+ */
+export interface UserProfile {
+  id: string;
+  username: string;
+  email: string;
+  updatedAt: number;
+}
+
+export async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
+  // Replace with your real service logic
+  return {
+    id: userId,
+    username: 'developer',
+    email: 'dev@example.com',
+    updatedAt: Date.now(),
+  };
+}
+`,
+      },
+    ],
   },
 ];
+
