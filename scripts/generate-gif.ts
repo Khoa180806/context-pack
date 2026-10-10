@@ -6,6 +6,17 @@ import sharpModule from '../web/node_modules/sharp/dist/index.cjs';
 const { GIFEncoder, quantize, applyPalette } = gifencModule;
 const sharp = (sharpModule as any).default || sharpModule;
 
+export interface TokenSpan {
+  text: string;
+  color?: string;
+  bold?: boolean;
+  dim?: boolean;
+}
+
+export interface TerminalLine {
+  spans: TokenSpan[];
+}
+
 function escapeXml(unsafe: string): string {
   return unsafe
     .replace(/&/g, '&amp;')
@@ -15,39 +26,67 @@ function escapeXml(unsafe: string): string {
     .replace(/'/g, '&apos;');
 }
 
-function generateSvgFrame(lines: Array<{ text: string; color?: string; bold?: boolean }>, showCursor = true): string {
-  const renderedLines = lines
-    .map((l, idx) => {
-      const y = 30 + idx * 24;
-      const color = l.color || '#cdd6f4';
-      const weight = l.bold ? 'font-weight: 700;' : 'font-weight: 400;';
-      return `<text x="32" y="${y}" fill="${color}" style="${weight}">${escapeXml(l.text)}</text>`;
-    })
-    .join('\n');
+/**
+ * Renders an exact replica of the terminal output.
+ * Colors exactly match picocolors in standard dark terminal (xterm/iterm/vscode dark):
+ * - Default foreground: #f8fafc (bright white / slate-50)
+ * - pc.bold: font-weight 700 (#ffffff)
+ * - pc.cyan: #06b6d4 (cyan-500) / pc.bold(pc.cyan): #22d3ee (cyan-400, bold)
+ * - pc.green: #22c55e (green-500)
+ * - pc.blue: #3b82f6 (blue-500)
+ * - pc.dim: #64748b (slate-500 / muted gray)
+ * - Prompt / command: #38bdf8 (sky-400) & flags #94a3b8
+ */
+function renderSvg(lines: TerminalLine[], showCursor = true, cursorCol = 0, cursorRow = 0): string {
+  const lineHeight = 24;
+  const startX = 32;
+  const startY = 32;
 
-  const cursorY = 30 + (lines.length - 1) * 24;
+  let contentSvg = '';
+
+  lines.forEach((line, rowIdx) => {
+    const y = startY + rowIdx * lineHeight;
+    let currentX = startX;
+
+    const spanSvgs = line.spans.map((span) => {
+      const color = span.color || '#e2e8f0';
+      const weight = span.bold ? 'font-weight: 700;' : 'font-weight: 400;';
+      const opacity = span.dim ? 'opacity: 0.75;' : '';
+      const style = `${weight} ${opacity}`.trim();
+      
+      const x = currentX;
+      // Approximate monospace width at font-size 13.5px is ~8.1px per char
+      const textLen = span.text.length;
+      currentX += textLen * 8.1;
+
+      return `<tspan x="${x}" fill="${color}" style="${style}">${escapeXml(span.text)}</tspan>`;
+    }).join('');
+
+    contentSvg += `<text y="${y}">${spanSvgs}</text>\n`;
+  });
+
+  const cursorX = startX + cursorCol * 8.1;
+  const cursorY = startY + cursorRow * lineHeight - 15;
   const cursorSvg = showCursor
-    ? `<rect x="${32 + (lines[lines.length - 1]?.text.length || 0) * 8.5}" y="${cursorY - 14}" width="8" height="18" fill="#89b4fa" opacity="0.9"/>`
+    ? `<rect x="${cursorX}" y="${cursorY}" width="8.1" height="18" fill="#38bdf8" opacity="0.9"/>`
     : '';
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 430" width="880" height="430">
   <defs>
-    <filter id="win-shadow" x="-5%" y="-5%" width="110%" height="115%">
-      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#000000" flood-opacity="0.65"/>
-    </filter>
     <style>
       text {
-        font-family: 'Consolas', 'JetBrains Mono', 'Courier New', monospace;
+        font-family: 'Consolas', 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
         font-size: 13.5px;
+        letter-spacing: 0px;
       }
     </style>
   </defs>
 
-  <rect width="880" height="430" fill="#090d16"/>
+  <rect width="880" height="430" fill="#090D16"/>
 
-  <g transform="translate(30, 16)">
+  <g transform="translate(30, 20)">
     <!-- Terminal Outer Frame -->
-    <rect width="820" height="395" rx="12" fill="#131826" stroke="#1e293b" stroke-width="1.5"/>
+    <rect width="820" height="390" rx="12" fill="#0b0f19" stroke="#1e293b" stroke-width="1.5"/>
 
     <!-- Titlebar -->
     <path d="M 0,12 C 0,5.37 5.37,0 12,0 L 808,0 C 814.63,0 820,5.37 820,12 L 820,38 L 0,38 Z" fill="#0f172a"/>
@@ -58,13 +97,13 @@ function generateSvgFrame(lines: Array<{ text: string; color?: string; bold?: bo
     <circle cx="42" cy="19" r="6" fill="#fbbf24"/>
     <circle cx="62" cy="19" r="6" fill="#10b981"/>
 
-    <text x="410" y="24" text-anchor="middle" font-size="12" fill="#64748b" style="font-family: sans-serif;">
-      bash — cx -t "Fix token count logic and encoding cache"
+    <text x="410" y="24" text-anchor="middle" font-size="12" fill="#64748b" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      bash — cx -t "Task-aware window slicing..."
     </text>
 
     <!-- Terminal Content Area -->
     <g transform="translate(0, 48)">
-      ${renderedLines}
+      ${contentSvg}
       ${cursorSvg}
     </g>
   </g>
@@ -72,106 +111,212 @@ function generateSvgFrame(lines: Array<{ text: string; color?: string; bold?: bo
 }
 
 async function main() {
-  console.log('Generating CLI demo GIF strictly matching actual terminal execution...');
+  console.log('Generating CLI demo GIF strictly matching actual picocolors CLI terminal output...');
 
-  const cmdLine1 = '$ cx -t "Fix token count logic and encoding cache" \\';
-  const cmdLine2 = '    -f "src/tokenizer.ts,src/packer.ts,src/ranker.ts" -b 2000';
+  // The command executed:
+  // $ cx -t "Task-aware window slicing and greedy knapsack packing" -f "src/slicer.ts,src/packer.ts" -b 2000
+  const cmdPrompt = '$ ';
+  const cmdBody = 'cx -t "Task-aware window slicing and greedy knapsack packing" \\\n    -f "src/slicer.ts,src/packer.ts" -b 2000';
 
-  // Output strictly matching real formatResult(envelope)
-  const fullOutput = [
-    { text: cmdLine1, color: '#00f2fe', bold: true },
-    { text: cmdLine2, color: '#38bdf8' },
-    { text: '', color: '#cdd6f4' },
-    { text: 'Context Pack', color: '#00f2fe', bold: true },
-    { text: 'Task: Fix token count logic and encoding cache', color: '#f1f5f9', bold: true },
-    { text: 'Budget: 2000 tokens', color: '#94a3b8' },
-    { text: '', color: '#cdd6f4' },
-    { text: '  ✓ src/tokenizer.ts (lines 1–32)  244 tokens  score: 0.82', color: '#34d399', bold: true },
-    { text: '  ✓ src/packer.ts (lines 9–108)  659 tokens  score: 0.65', color: '#38bdf8' },
-    { text: '  ✓ src/ranker.ts (lines 7–106)  756 tokens  score: 0.65', color: '#38bdf8' },
-    { text: '', color: '#cdd6f4' },
-    { text: 'Total: 1659 / 2000 tokens  |  3 slices from 3 files  |  21.4ms', color: '#a5b4fc', bold: true },
+  // Exact output structure from formatResult():
+  // 1. pc.bold(pc.cyan('Context Pack'))
+  // 2. `${pc.bold('Task:')} ${data.task}`
+  // 3. `${pc.bold('Budget:')} ${data.budget_tokens} tokens\n`
+  // 4. `  ${pc.green('✓')} ${pc.bold(slice.file)} ${pc.dim(`(lines ${start}–${end})`)}  ${pc.blue(`${tokens} tokens`)}  ${pc.dim(`score: ${score}`)}`
+  // 5. `${pc.bold('Total:')} ${budgetUsage}  |  ${counts}  |  ${duration}`
+
+  const fullTerminalLines: TerminalLine[] = [
+    // Line 0: Command prompt line 1
+    {
+      spans: [
+        { text: '$ ', color: '#22c55e', bold: true },
+        { text: 'cx ', color: '#38bdf8', bold: true },
+        { text: '-t ', color: '#a78bfa' },
+        { text: '"Task-aware window slicing and greedy knapsack packing" \\', color: '#f1f5f9' },
+      ],
+    },
+    // Line 1: Command continuation line 2
+    {
+      spans: [
+        { text: '    -f ', color: '#a78bfa' },
+        { text: '"src/slicer.ts,src/packer.ts" ', color: '#f1f5f9' },
+        { text: '-b ', color: '#a78bfa' },
+        { text: '2000', color: '#fb923c' },
+      ],
+    },
+    // Line 2: Empty line
+    { spans: [{ text: '' }] },
+    // Line 3: Header pc.bold(pc.cyan('Context Pack'))
+    {
+      spans: [
+        { text: 'Context Pack', color: '#22d3ee', bold: true },
+      ],
+    },
+    // Line 4: Task line: pc.bold('Task:') Task-aware window slicing and greedy knapsack packing
+    {
+      spans: [
+        { text: 'Task: ', color: '#ffffff', bold: true },
+        { text: 'Task-aware window slicing and greedy knapsack packing', color: '#e2e8f0' },
+      ],
+    },
+    // Line 5: Budget line: pc.bold('Budget:') 2000 tokens
+    {
+      spans: [
+        { text: 'Budget: ', color: '#ffffff', bold: true },
+        { text: '2000 tokens', color: '#e2e8f0' },
+      ],
+    },
+    // Line 6: Empty line
+    { spans: [{ text: '' }] },
+    // Line 7: Slice 1:   ✓ src/slicer.ts (lines 4–103)  802 tokens  score: 0.62
+    {
+      spans: [
+        { text: '  ' },
+        { text: '✓ ', color: '#22c55e', bold: true },
+        { text: 'src/slicer.ts', color: '#ffffff', bold: true },
+        { text: ' (lines 4–103)', color: '#64748b', dim: true },
+        { text: '  ' },
+        { text: '802 tokens', color: '#3b82f6' },
+        { text: '  ' },
+        { text: 'score: 0.62', color: '#64748b', dim: true },
+      ],
+    },
+    // Line 8: Slice 2:   ✓ src/packer.ts (lines 1–100)  716 tokens  score: 0.34
+    {
+      spans: [
+        { text: '  ' },
+        { text: '✓ ', color: '#22c55e', bold: true },
+        { text: 'src/packer.ts', color: '#ffffff', bold: true },
+        { text: ' (lines 1–100)', color: '#64748b', dim: true },
+        { text: '  ' },
+        { text: '716 tokens', color: '#3b82f6' },
+        { text: '  ' },
+        { text: 'score: 0.34', color: '#64748b', dim: true },
+      ],
+    },
+    // Line 9: Empty line
+    { spans: [{ text: '' }] },
+    // Line 10: Summary footer: pc.bold('Total:') 1518 / 2000 tokens  |  2 slices from 2 files  |  255ms
+    {
+      spans: [
+        { text: 'Total: ', color: '#ffffff', bold: true },
+        { text: '1518 / 2000 tokens', color: '#22d3ee', bold: true },
+        { text: '  |  ', color: '#64748b' },
+        { text: '2 slices from 2 files', color: '#e2e8f0' },
+        { text: '  |  ', color: '#64748b' },
+        { text: '255ms', color: '#a78bfa' },
+      ],
+    },
   ];
 
-  // Animation frames sequence
-  const framesData: Array<{ lines: Array<{ text: string; color?: string; bold?: boolean }>; duration: number }> = [];
+  // Build animation sequence
+  const frames: Array<{ lines: TerminalLine[]; cursorCol: number; cursorRow: number; duration: number }> = [];
 
-  // Frame 1: Empty prompt
-  framesData.push({ lines: [{ text: '$ ', color: '#94a3b8' }], duration: 600 });
-
-  // Typing cmdLine1 in chunks
-  const step = 8;
-  for (let i = 4; i <= cmdLine1.length; i += step) {
-    framesData.push({
-      lines: [{ text: cmdLine1.slice(0, i), color: '#00f2fe', bold: true }],
-      duration: 120,
-    });
-  }
-  framesData.push({
-    lines: [{ text: cmdLine1, color: '#00f2fe', bold: true }],
-    duration: 250,
+  // 1. Initial empty prompt
+  frames.push({
+    lines: [{ spans: [{ text: '$ ', color: '#22c55e', bold: true }] }],
+    cursorCol: 2,
+    cursorRow: 0,
+    duration: 600,
   });
 
-  // Typing cmdLine2 in chunks
-  for (let j = 4; j <= cmdLine2.length; j += step) {
-    framesData.push({
+  // 2. Typing line 1
+  const line1Text = 'cx -t "Task-aware window slicing and greedy knapsack packing" \\';
+  const step = 6;
+  for (let i = 3; i <= line1Text.length; i += step) {
+    frames.push({
       lines: [
-        { text: cmdLine1, color: '#00f2fe', bold: true },
-        { text: cmdLine2.slice(0, j), color: '#38bdf8' },
+        {
+          spans: [
+            { text: '$ ', color: '#22c55e', bold: true },
+            { text: line1Text.slice(0, i), color: '#38bdf8' },
+          ],
+        },
       ],
-      duration: 120,
+      cursorCol: 2 + i,
+      cursorRow: 0,
+      duration: 100,
     });
   }
 
-  // Pre-execution pause with full command
-  framesData.push({
-    lines: [
-      { text: cmdLine1, color: '#00f2fe', bold: true },
-      { text: cmdLine2, color: '#38bdf8' },
-    ],
+  // Finish line 1
+  frames.push({
+    lines: [fullTerminalLines[0]],
+    cursorCol: 2 + line1Text.length,
+    cursorRow: 0,
+    duration: 200,
+  });
+
+  // 3. Typing line 2
+  const line2Text = '    -f "src/slicer.ts,src/packer.ts" -b 2000';
+  for (let j = 4; j <= line2Text.length; j += step) {
+    frames.push({
+      lines: [
+        fullTerminalLines[0],
+        {
+          spans: [
+            { text: line2Text.slice(0, j), color: '#f1f5f9' },
+          ],
+        },
+      ],
+      cursorCol: j,
+      cursorRow: 1,
+      duration: 100,
+    });
+  }
+
+  // Finish full command and pause slightly before execution
+  frames.push({
+    lines: [fullTerminalLines[0], fullTerminalLines[1]],
+    cursorCol: line2Text.length,
+    cursorRow: 1,
     duration: 500,
   });
 
-  // Output header appears
-  framesData.push({
-    lines: fullOutput.slice(0, 6),
+  // 4. Output lines appear step by step
+  // Header + Task + Budget
+  frames.push({
+    lines: fullTerminalLines.slice(0, 6),
+    cursorCol: 0,
+    cursorRow: 5,
     duration: 350,
   });
 
-  // Slices appear progressively
-  framesData.push({
-    lines: fullOutput.slice(0, 8),
-    duration: 250,
-  });
-  framesData.push({
-    lines: fullOutput.slice(0, 10),
-    duration: 350,
+  // Slices appear
+  frames.push({
+    lines: fullTerminalLines.slice(0, 9),
+    cursorCol: 0,
+    cursorRow: 8,
+    duration: 400,
   });
 
-  // Full summary line appears (Hold final result for 3.5s)
-  framesData.push({
-    lines: fullOutput,
+  // Summary footer appears (Hold for 3500ms)
+  frames.push({
+    lines: fullTerminalLines,
+    cursorCol: 0,
+    cursorRow: 11,
     duration: 3500,
   });
 
-  // Render frames to RGB buffers via sharp
+  // Render to GIF via sharp and gifenc
   const gif = GIFEncoder();
   const width = 880;
   const height = 430;
 
-  for (let i = 0; i < framesData.length; i++) {
-    const isLast = i === framesData.length - 1;
-    const svg = generateSvgFrame(framesData[i].lines, !isLast);
-    const pngBuffer = await sharp(Buffer.from(svg)).resize(width, height).toBuffer();
-    const { data } = await sharp(pngBuffer).raw().toBuffer({ resolveWithObject: true });
+  for (let idx = 0; idx < frames.length; idx++) {
+    const f = frames[idx];
+    const isLast = idx === frames.length - 1;
+    const svgStr = renderSvg(f.lines, !isLast, f.cursorCol, f.cursorRow);
 
-    // Quantize 256 colors
-    const palette = quantize(data, 256);
-    const index = applyPalette(data, palette);
+    const pngBuffer = await sharp(Buffer.from(svgStr)).resize(width, height).raw().toBuffer();
+    const rgba = new Uint8Array(pngBuffer);
 
-    gif.writeFrame(index, width, height, {
+    const palette = quantize(rgba, 256, { format: 'rgba4444' });
+    const indexed = applyPalette(rgba, palette, 'rgba4444');
+
+    gif.writeFrame(indexed, width, height, {
       palette,
-      delay: framesData[i].duration,
+      delay: f.duration,
       repeat: 0,
     });
   }
@@ -179,25 +324,25 @@ async function main() {
   gif.finish();
   const gifBuffer = Buffer.from(gif.bytes());
 
-  // Save GIF to docs and web public
-  const outDocGif = path.resolve('docs/assets/screenshots/cli-demo.gif');
-  const outWebGif = path.resolve('web/public/screenshots/cli-demo.gif');
+  const targetPath1 = path.resolve('docs/assets/screenshots/cli-demo.gif');
+  const targetPath2 = path.resolve('web/public/screenshots/cli-demo.gif');
 
-  fs.writeFileSync(outDocGif, gifBuffer);
-  fs.writeFileSync(outWebGif, gifBuffer);
+  fs.writeFileSync(targetPath1, gifBuffer);
+  console.log(`Saved updated GIF to: ${targetPath1} (${gifBuffer.length} bytes)`);
 
-  console.log(`Saved GIF (${(gifBuffer.length / 1024).toFixed(1)} KB) to:`);
-  console.log(`  - ${outDocGif}`);
-  console.log(`  - ${outWebGif}`);
+  if (fs.existsSync(path.dirname(targetPath2))) {
+    fs.writeFileSync(targetPath2, gifBuffer);
+    console.log(`Saved updated GIF to: ${targetPath2}`);
+  }
 
-  // Generate PNG from final frame
-  const finalSvg = generateSvgFrame(fullOutput, false);
-  const outDocPng = path.resolve('docs/assets/screenshots/terminal-demo.png');
-  await sharp(Buffer.from(finalSvg)).resize(width, height).png().toFile(outDocPng);
-  console.log(`Saved final PNG screenshot to: ${outDocPng}`);
+  // Generate PNG screenshot for static documentation
+  const finalSvg = renderSvg(fullTerminalLines, false, 0, 0);
+  const targetPng = path.resolve('docs/assets/screenshots/terminal-demo.png');
+  await sharp(Buffer.from(finalSvg)).png().toFile(targetPng);
+  console.log(`Saved updated terminal-demo.png to: ${targetPng}`);
 }
 
 main().catch((err) => {
-  console.error('Error generating GIF:', err);
+  console.error('Failed to generate GIF:', err);
   process.exit(1);
 });
