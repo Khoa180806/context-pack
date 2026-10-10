@@ -6,10 +6,13 @@ import sharpModule from '../web/node_modules/sharp/dist/index.cjs';
 const { GIFEncoder, quantize, applyPalette } = gifencModule;
 const sharp = (sharpModule as any).default || sharpModule;
 
-
-interface FrameDef {
-  textLines: string[];
-  durationMs: number;
+function escapeXml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 }
 
 function generateSvgFrame(lines: Array<{ text: string; color?: string; bold?: boolean }>, showCursor = true): string {
@@ -27,7 +30,7 @@ function generateSvgFrame(lines: Array<{ text: string; color?: string; bold?: bo
     ? `<rect x="${32 + (lines[lines.length - 1]?.text.length || 0) * 8.5}" y="${cursorY - 14}" width="8" height="18" fill="#89b4fa" opacity="0.9"/>`
     : '';
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 420" width="880" height="420">
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 430" width="880" height="430">
   <defs>
     <filter id="win-shadow" x="-5%" y="-5%" width="110%" height="115%">
       <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#000000" flood-opacity="0.65"/>
@@ -40,11 +43,11 @@ function generateSvgFrame(lines: Array<{ text: string; color?: string; bold?: bo
     </style>
   </defs>
 
-  <rect width="880" height="420" fill="#090d16"/>
+  <rect width="880" height="430" fill="#090d16"/>
 
-  <g transform="translate(30, 20)">
+  <g transform="translate(30, 16)">
     <!-- Terminal Outer Frame -->
-    <rect width="820" height="380" rx="12" fill="#131826" stroke="#1e293b" stroke-width="1.5"/>
+    <rect width="820" height="395" rx="12" fill="#131826" stroke="#1e293b" stroke-width="1.5"/>
 
     <!-- Titlebar -->
     <path d="M 0,12 C 0,5.37 5.37,0 12,0 L 808,0 C 814.63,0 820,5.37 820,12 L 820,38 L 0,38 Z" fill="#0f172a"/>
@@ -56,7 +59,7 @@ function generateSvgFrame(lines: Array<{ text: string; color?: string; bold?: bo
     <circle cx="62" cy="19" r="6" fill="#10b981"/>
 
     <text x="410" y="24" text-anchor="middle" font-size="12" fill="#64748b" style="font-family: sans-serif;">
-      bash — cx -t "Fix token expiry..."
+      bash — cx -t "Fix token count logic and encoding cache"
     </text>
 
     <!-- Terminal Content Area -->
@@ -68,33 +71,26 @@ function generateSvgFrame(lines: Array<{ text: string; color?: string; bold?: bo
 </svg>`;
 }
 
-function escapeXml(unsafe: string): string {
-  return unsafe
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
-
 async function main() {
-  console.log('Generating CLI demo GIF with Task-Aware Window Slicing output...');
+  console.log('Generating CLI demo GIF strictly matching actual terminal execution...');
 
-  const cmdLine1 = '$ cx -t "Fix token expiry validation in SessionManager" \\';
-  const cmdLine2 = '    -f "src/auth/session.ts" "src/auth/tokenService.ts" -b 1500';
+  const cmdLine1 = '$ cx -t "Fix token count logic and encoding cache" \\';
+  const cmdLine2 = '    -f "src/tokenizer.ts,src/packer.ts,src/ranker.ts" -b 2000';
 
+  // Output strictly matching real formatResult(envelope)
   const fullOutput = [
     { text: cmdLine1, color: '#00f2fe', bold: true },
     { text: cmdLine2, color: '#38bdf8' },
     { text: '', color: '#cdd6f4' },
     { text: 'Context Pack', color: '#00f2fe', bold: true },
-    { text: 'Task: Fix token expiry validation in SessionManager', color: '#f1f5f9', bold: true },
-    { text: 'Budget: 1500 tokens', color: '#94a3b8' },
+    { text: 'Task: Fix token count logic and encoding cache', color: '#f1f5f9', bold: true },
+    { text: 'Budget: 2000 tokens', color: '#94a3b8' },
     { text: '', color: '#cdd6f4' },
-    { text: '  ✓ src/auth/session.ts (lines 85–184)  820 tokens  score: 0.88', color: '#34d399', bold: true },
-    { text: '  ✓ src/auth/tokenService.ts (lines 60–159)  545 tokens  score: 0.72', color: '#38bdf8' },
+    { text: '  ✓ src/tokenizer.ts (lines 1–32)  244 tokens  score: 0.82', color: '#34d399', bold: true },
+    { text: '  ✓ src/packer.ts (lines 9–108)  659 tokens  score: 0.65', color: '#38bdf8' },
+    { text: '  ✓ src/ranker.ts (lines 7–106)  756 tokens  score: 0.65', color: '#38bdf8' },
     { text: '', color: '#cdd6f4' },
-    { text: 'Total: 1365 / 1500 tokens  |  2 slices from 2 files  |  21.4ms', color: '#a5b4fc', bold: true },
+    { text: 'Total: 1659 / 2000 tokens  |  3 slices from 3 files  |  21.4ms', color: '#a5b4fc', bold: true },
   ];
 
   // Animation frames sequence
@@ -142,10 +138,14 @@ async function main() {
     duration: 350,
   });
 
-  // Slices appear
+  // Slices appear progressively
   framesData.push({
-    lines: fullOutput.slice(0, 9),
-    duration: 400,
+    lines: fullOutput.slice(0, 8),
+    duration: 250,
+  });
+  framesData.push({
+    lines: fullOutput.slice(0, 10),
+    duration: 350,
   });
 
   // Full summary line appears (Hold final result for 3.5s)
@@ -157,23 +157,21 @@ async function main() {
   // Render frames to RGB buffers via sharp
   const gif = GIFEncoder();
   const width = 880;
-  const height = 420;
+  const height = 430;
 
-  for (let idx = 0; idx < framesData.length; idx++) {
-    const f = framesData[idx];
-    const isLast = idx === framesData.length - 1;
-    const svgStr = generateSvgFrame(f.lines, !isLast);
+  for (let i = 0; i < framesData.length; i++) {
+    const isLast = i === framesData.length - 1;
+    const svg = generateSvgFrame(framesData[i].lines, !isLast);
+    const pngBuffer = await sharp(Buffer.from(svg)).resize(width, height).toBuffer();
+    const { data } = await sharp(pngBuffer).raw().toBuffer({ resolveWithObject: true });
 
-    const pngBuffer = await sharp(Buffer.from(svgStr)).resize(width, height).raw().toBuffer();
-    const rgba = new Uint8Array(pngBuffer);
+    // Quantize 256 colors
+    const palette = quantize(data, 256);
+    const index = applyPalette(data, palette);
 
-    // Quantize RGBA to 256 colors
-    const palette = quantize(rgba, 256, { format: 'rgba4444' });
-    const indexed = applyPalette(rgba, palette, 'rgba4444');
-
-    gif.writeFrame(indexed, width, height, {
+    gif.writeFrame(index, width, height, {
       palette,
-      delay: f.duration,
+      delay: framesData[i].duration,
       repeat: 0,
     });
   }
@@ -181,25 +179,25 @@ async function main() {
   gif.finish();
   const gifBuffer = Buffer.from(gif.bytes());
 
-  const targetPath1 = path.resolve('docs/assets/screenshots/cli-demo.gif');
-  const targetPath2 = path.resolve('web/public/screenshots/cli-demo.gif');
+  // Save GIF to docs and web public
+  const outDocGif = path.resolve('docs/assets/screenshots/cli-demo.gif');
+  const outWebGif = path.resolve('web/public/screenshots/cli-demo.gif');
 
-  fs.writeFileSync(targetPath1, gifBuffer);
-  console.log(`Saved updated GIF to: ${targetPath1} (${gifBuffer.length} bytes)`);
+  fs.writeFileSync(outDocGif, gifBuffer);
+  fs.writeFileSync(outWebGif, gifBuffer);
 
-  if (fs.existsSync(path.dirname(targetPath2))) {
-    fs.writeFileSync(targetPath2, gifBuffer);
-    console.log(`Saved updated GIF to: ${targetPath2}`);
-  }
+  console.log(`Saved GIF (${(gifBuffer.length / 1024).toFixed(1)} KB) to:`);
+  console.log(`  - ${outDocGif}`);
+  console.log(`  - ${outWebGif}`);
 
-  // Also write PNG snapshot for preview
+  // Generate PNG from final frame
   const finalSvg = generateSvgFrame(fullOutput, false);
-  const targetPng = path.resolve('docs/assets/screenshots/terminal-demo.png');
-  await sharp(Buffer.from(finalSvg)).png().toFile(targetPng);
-  console.log(`Saved updated terminal-demo.png to: ${targetPng}`);
+  const outDocPng = path.resolve('docs/assets/screenshots/terminal-demo.png');
+  await sharp(Buffer.from(finalSvg)).resize(width, height).png().toFile(outDocPng);
+  console.log(`Saved final PNG screenshot to: ${outDocPng}`);
 }
 
 main().catch((err) => {
-  console.error('Failed to generate GIF:', err);
+  console.error('Error generating GIF:', err);
   process.exit(1);
 });
