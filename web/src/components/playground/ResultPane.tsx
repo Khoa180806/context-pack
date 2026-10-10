@@ -219,7 +219,7 @@ export function ResultPane({
           </div>
 
           {activeTab === 'slices' ? (
-            <SlicesViewer slices={slices} emptyMessage={t.noSlices} />
+            <SlicesViewer slices={slices} task={task} emptyMessage={t.noSlices} />
           ) : (
             <JsonViewer
               envelope={envelope}
