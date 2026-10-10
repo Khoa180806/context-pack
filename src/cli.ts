@@ -19,15 +19,22 @@ async function handlePack(opts: any) {
     const maxSliceLines = Number.parseInt(opts.maxSliceLines, 10);
     const minRelevance = Number.parseFloat(opts.minRelevance);
 
+    const rawFiles: string[] = Array.isArray(opts.files) ? opts.files : [opts.files];
+    const fileList = rawFiles
+      .flatMap((item) => (typeof item === 'string' ? item.split(',') : [item]))
+      .map((p) => (typeof p === 'string' ? p.trim() : p))
+      .filter(Boolean);
+
     const envelope = await pack({
       task: opts.task,
-      files: Array.isArray(opts.files) ? opts.files : [opts.files],
+      files: fileList,
       budget,
       encoding: opts.encoding,
       maxSliceLines,
       minRelevance,
       outputFile: opts.output,
     });
+
 
     if (isJson) {
       process.stdout.write(JSON.stringify(envelope, null, 2) + '\n');
