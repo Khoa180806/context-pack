@@ -59,8 +59,9 @@ export function useContextPacker({ initialPresetId = 'auth-bug' }: UseContextPac
           files,
           budget,
           encoding,
-          maxSliceLines: 100,
+          maxSliceLines: 60,
         });
+
         setEnvelope(result);
         setErrorMessage(null);
       } catch (err: unknown) {

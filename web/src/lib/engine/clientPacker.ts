@@ -36,6 +36,87 @@ export function sliceContentLines(
   };
 }
 
+const STOP_WORDS = new Set([
+  'the', 'is', 'at', 'which', 'on', 'for', 'in', 'a', 'an', 'to', 'and', 'or',
+  'of', 'with', 'by', 'from', 'as', 'into', 'not', 'that', 'this', 'it', 'be',
+  'are', 'was', 'were', 'been', 'will', 'would', 'should', 'can', 'could', 'has',
+  'have', 'had', 'does', 'did', 'do', 'but', 'if', 'when', 'than', 'then',
+]);
+
+/**
+ * Task-Aware Window Slicing for Web Client:
+ * Locates the most relevant lines in the file matching task keywords,
+ * then returns a window of maxSliceLines centered around that hotspot.
+ */
+export function sliceRelevantContentLines(
+  content: string,
+  task: string,
+  maxSliceLines: number = 100,
+): SlicedBlock {
+  if (!content) {
+    return { content: '', startLine: 1, endLine: 1 };
+  }
+
+  const lines = content.split(/\r?\n/);
+  const total = lines.length;
+
+  // If the file is smaller than or equal to maxSliceLines, keep the entire file
+  if (total <= maxSliceLines) {
+    return {
+      content,
+      startLine: 1,
+      endLine: total,
+    };
+  }
+
+  // Extract distinct informative terms from task description
+  const rawTerms = task
+    .toLowerCase()
+    .match(/[a-z0-9_]{3,}/g) ?? [];
+
+  const terms = Array.from(new Set(rawTerms)).filter((term) => !STOP_WORDS.has(term));
+
+  if (terms.length === 0) {
+    return sliceContentLines(content, 1, maxSliceLines);
+  }
+
+  // Score each line
+  let bestLine = 1;
+  let bestScore = 0;
+
+  for (let i = 0; i < total; i++) {
+    const lineLower = lines[i].toLowerCase();
+    let score = 0;
+
+    for (const term of terms) {
+      if (lineLower.includes(term)) {
+        score += term.length >= 6 ? 3 : 1;
+      }
+    }
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestLine = i + 1; // 1-indexed
+    }
+  }
+
+  // Fallback to beginning of file if no keyword matches
+  if (bestScore === 0) {
+    return sliceContentLines(content, 1, maxSliceLines);
+  }
+
+  // Window context: ~35% lines before hotspot, ~65% lines after
+  const leadLines = Math.floor(maxSliceLines * 0.35);
+  let startLine = Math.max(1, bestLine - leadLines);
+  let endLine = Math.min(total, startLine + maxSliceLines - 1);
+
+  if (endLine === total) {
+    startLine = Math.max(1, endLine - maxSliceLines + 1);
+  }
+
+  return sliceContentLines(content, startLine, endLine);
+}
+
 export function packVirtualFiles(options: ClientPackOptions): ClientContextPackEnvelope {
   const startTime = Date.now();
 
@@ -64,10 +145,11 @@ export function packVirtualFiles(options: ClientPackOptions): ClientContextPackE
   let truncated = false;
   const selectedFiles = new Set<string>();
 
-  // Greedy knapsack packing
+  // Greedy knapsack packing using task-aware relevant lines
   for (const item of ranked) {
-    const sliced = sliceContentLines(item.content, 1, maxSliceLines);
+    const sliced = sliceRelevantContentLines(item.content, options.task, maxSliceLines);
     const tokens = countTokens(sliced.content, encoding);
+
 
     if (usedTokens + tokens <= budget) {
       usedTokens += tokens;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sliceContentLines, packVirtualFiles } from './clientPacker';
+import { sliceContentLines, sliceRelevantContentLines, packVirtualFiles } from './clientPacker';
 import type { VirtualFile } from '@/types/playground';
 
 describe('clientPacker', () => {
@@ -10,6 +10,21 @@ describe('clientPacker', () => {
     expect(slice.endLine).toBe(4);
     expect(slice.content).toBe(`line 2\nline 3\nline 4`);
   });
+
+  it('slices relevant content centered around task keywords', () => {
+    const lines = Array.from({ length: 120 }, (_, i) => `// Row ${i + 1}`);
+    lines[59] = 'export function revokeSession(id: string) {';
+    lines[60] = '  return deleteId(id);';
+    lines[61] = '}';
+    const code = lines.join('\n');
+
+    const slice = sliceRelevantContentLines(code, 'Fix issue in revokeSession logic', 30);
+    expect(slice.startLine).toBeLessThanOrEqual(60);
+    expect(slice.endLine).toBeGreaterThanOrEqual(62);
+    expect(slice.content).toContain('revokeSession');
+    expect(slice.endLine - slice.startLine + 1).toBe(30);
+  });
+
 
   it('packs files within given token budget and prioritizes high-relevance files', () => {
     const files: VirtualFile[] = [
