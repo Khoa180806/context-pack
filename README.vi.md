@@ -23,7 +23,7 @@
   <img src="https://img.shields.io/badge/node-%3E%3D18.0.0-339933.svg?style=for-the-badge&logo=node.js&logoColor=white" alt="Node >= 18.0.0" />
   <img src="https://img.shields.io/badge/typescript-5.6-3178C6.svg?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/pure--js-no--wasm-orange.svg?style=for-the-badge" alt="Pure JS" />
-  <img src="https://img.shields.io/badge/tests-42%20passed-brightgreen.svg?style=for-the-badge" alt="Vitest Tests" />
+  <img src="https://img.shields.io/badge/tests-60%20passed-brightgreen.svg?style=for-the-badge" alt="Vitest Tests" />
   <img src="https://img.shields.io/badge/giấy_phép-MIT-purple.svg?style=for-the-badge" alt="Giấy phép MIT" />
 </p>
 
@@ -57,20 +57,22 @@
 
 ## Giới thiệu tổng quan
 
-`context-pack` là công cụ dòng lệnh (CLI) và bộ thư viện TypeScript SDK cục bộ (local-first), được xây dựng nhằm giải quyết bài toán loãng chú ý (prompt dilution) và cạn kiệt ngân sách token trong các luồng làm việc của AI coding agent (ví dụ: Cursor, Continue, Claude Code, GitHub Copilot).
+`context-pack` là công cụ dòng lệnh (CLI) và bộ thư viện TypeScript SDK chạy 100% cục bộ (local-first), được xây dựng nhằm giải quyết triệt để vấn đề loãng prompt (prompt dilution) và cạn kiệt ngân sách token trong các luồng làm việc của AI coding agent (như Cursor, Continue, Claude Code, GitHub Copilot).
 
-Thay vì nạp toàn bộ hàng ngàn dòng mã nguồn thô vào cửa sổ ngữ cảnh (context window) của mô hình ngôn ngữ lớn (LLM), `context-pack` duyệt qua các tệp mã nguồn mục tiêu, chấm điểm mức độ liên quan của từng đoạn mã dựa trên yêu cầu nhiệm vụ bằng thuật toán BM25 / TF-IDF, và sử dụng giải thuật Knapsack tham lam để gói gọn các đoạn mã đắt giá nhất vào một gói ngữ cảnh mà không bao giờ vượt quá trần token cho phép.
+Thay vì nạp toàn bộ hàng ngàn dòng mã nguồn thô vào cửa sổ context (context window) của LLM, `context-pack` phân tích các file mã nguồn mục tiêu, chấm điểm mức độ liên quan theo yêu cầu nhiệm vụ bằng thuật toán BM25 / TF-IDF, và áp dụng giải thuật Knapsack để gói gọn các lát cắt code giá trị nhất vào gói ngữ cảnh mà không bao giờ vượt quá trần token cho phép.
 
 ---
 
 ## Vì sao nên dùng Context Pack?
 
-- **Tiết kiệm token vượt trội (-75.2%)**: Ngăn ngừa hiện tượng loãng sự chú ý của LLM và giảm chi phí suy luận bằng cách trích xuất các đoạn mã trọng tâm thay vì nạp toàn bộ tệp thô.
-- **100% Cục bộ & Bảo mật mã nguồn**: Hoạt động hoàn toàn trong bộ nhớ máy tính cục bộ. Không gửi dữ liệu qua mạng, không telemetry, không nguy cơ rò rỉ mã nguồn dự án ra bên ngoài.
-- **Tokenizer thuần JavaScript**: Được phát triển trên nền `js-tiktoken`, không phụ thuộc vào các module biên dịch C++ native (Node-GYP) hay WebAssembly (WASM), vận hành ổn định trên Windows, macOS và Linux.
+- **Tiết kiệm token vượt trội (-75.2%)**: Ngăn ngừa hiện tượng loãng sự chú ý của LLM và cắt giảm tới 75% chi phí gọi API bằng cách trích xuất chính xác các đoạn mã trọng tâm thay vì nạp toàn bộ file thô.
+- **Cắt lát thông minh theo ngữ cảnh (Task-Aware Window Slicing)**: Tự động phát hiện vị trí "điểm nóng" (hàm, biến, logic có bug) dựa trên từ khóa yêu cầu để căn chỉnh cửa sổ cắt lát `maxSliceLines`, không cắt máy móc từ đầu file.
+- **100% Cục bộ & Bảo mật mã nguồn**: Hoạt động hoàn toàn trong bộ nhớ máy tính cục bộ. Không gửi dữ liệu qua mạng, không telemetry, không lo rò rỉ mã nguồn ra bên ngoài.
+- **Tokenizer thuần JavaScript**: Được phát triển trên nền `js-tiktoken`, không phụ thuộc vào các module C++ native (Node-GYP) hay WebAssembly (WASM), vận hành ổn định trên Windows, macOS và Linux.
 - **Thuật toán Knapsack tất định**: Xử lý logic hòa điểm (tie-breaking) hoàn toàn xác định. Các tệp đầu vào, mô tả nhiệm vụ và mức ngân sách giống nhau sẽ luôn tạo ra kết quả giống nhau 100%.
-- **Cấu trúc JSON Envelope chuẩn hóa**: Cung cấp chế độ `--json` định dạng sẵn schema cho các hệ thống điều phối đa agent (multi-agent orchestration).
+- **Cấu trúc JSON Envelope chuẩn hóa**: Cung cấp chế độ `--json` định dạng sẵn schema cho các hệ thống điều phối agent tự động.
 - **Lệnh tắt siêu ngắn (`cx`)**: Hỗ trợ trực tiếp cờ lệnh (`cx -t "..." -f "..." -b 1000`) cùng khả năng tương thích ngược các lệnh con truyền thống.
+
 
 ---
 
