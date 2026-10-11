@@ -13,13 +13,14 @@
 <p align="center">
   <a href="README.md">English</a> • <a href="README.vi.md">Tiếng Việt</a>
   <br />
-  <a href="https://context-pack.vercel.app">🌐 Live Web Playground</a> •
-  <a href="docs/SPEC.md">Technical Specification</a> •
+  <a href="https://context-pack-tool.vercel.app">🌐 Live Web Playground</a> •
+  <a href="docs/README.md">📚 Documentation</a> •
+  <a href="docs/02-technical/architecture.md">Architecture</a> •
   <a href="docs/BENCHMARK_RESULTS.md">Benchmark Report</a>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.1.1-blue.svg?style=for-the-badge" alt="Version 0.1.1" />
+  <img src="https://img.shields.io/badge/version-0.1.2-blue.svg?style=for-the-badge" alt="Version 0.1.2" />
   <img src="https://img.shields.io/badge/node-%3E%3D18.0.0-339933.svg?style=for-the-badge&logo=node.js&logoColor=white" alt="Node >= 18.0.0" />
   <img src="https://img.shields.io/badge/typescript-5.6-3178C6.svg?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/pure--js-no--wasm-orange.svg?style=for-the-badge" alt="Pure JS" />
@@ -50,8 +51,9 @@
 9. [Supported Encodings](#supported-encodings)
 10. [Performance Benchmarks](#performance-benchmarks)
 11. [Frequently Asked Questions (FAQ)](#frequently-asked-questions-faq)
-12. [Development & Contributing](#development--contributing)
-13. [License & Acknowledgments](#license--acknowledgments)
+12. [Documentation](#documentation)
+13. [Development & Contributing](#development--contributing)
+14. [License & Acknowledgments](#license--acknowledgments)
 
 ---
 
@@ -302,6 +304,26 @@ Context Pack combines BM25 term weighting and TF-IDF matching between terms in y
 
 #### Does Context Pack rewrite or modify my source files?
 No. Context Pack is strictly read-only. It inspects source code, extracts relevant line ranges, and emits the packed context to stdout or a designated JSON file.
+
+---
+
+## Documentation
+
+Comprehensive technical documentation is maintained under the [`docs/`](docs/README.md) directory:
+
+- [**Documentation Index**](docs/README.md) — Complete handbook overview and guide index.
+- [**System Architecture**](docs/02-technical/architecture.md) — 4-stage pipeline, in-memory execution boundaries, and Mermaid diagrams.
+- [**Business Flow & Sequences**](docs/02-technical/business-flow.md) — Sequence diagrams for CLI, TypeScript SDK, and Web Playground flows.
+- [**API Reference & Specification**](docs/02-technical/api-reference.md) — TypeScript SDK interfaces, CLI arguments, and envelope schema.
+- [**Technical Decisions (ADRs)**](docs/02-technical/tech-decisions.md) — ADR-001 through ADR-005 covering tokenizer, Task-Aware Slicing, and knapsack packing.
+- [**Getting Started Guide**](docs/01-overview/getting-started.md) — Prerequisites, global installation, CLI syntax, and SDK examples.
+- [**Development Workflow**](docs/01-overview/development-workflow.md) — Branching, Conventional Commits, testing guidelines, and CI matrix.
+- [**Changelog**](docs/03-product/changelog.md) — Version release history from v0.1.0 to v0.1.2.
+- [**Product Roadmap**](docs/03-product/roadmap.md) — Completed milestones and near-term plans (native MCP server, multi-chunk slicing).
+- [**Deployment Operations**](docs/04-operations/deployment.md) — npm package publishing procedures and Vercel hosting setup.
+- [**Configuration Reference**](docs/04-operations/configuration.md) — Environment variables, CLI flags reference, and operational boundaries.
+- [**UI Design Notes**](docs/06-design/ui-notes.md) — Web Playground dark theme design tokens, twin-scroll editor, and zero-leak privacy.
+- [**Known Issues & Limitations**](docs/07-notes/known-issues.md) — Algorithmic constraints, edge cases, and technical trade-offs.
 
 ---
 
