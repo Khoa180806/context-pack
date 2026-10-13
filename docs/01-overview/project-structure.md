@@ -21,8 +21,6 @@ context_pack/
 │   ├── 06-design/
 │   ├── 07-notes/
 │   └── assets/                    # Architectural diagrams, SVG terminal captures, GIF demo
-├── scripts/
-│   └── generate-gif.ts            # Sharp + gifenc terminal GIF/PNG snapshot generator
 ├── src/                           # Core Node.js CLI & TypeScript SDK engine
 ├── test/                          # Unit and CLI integration test suite (Vitest)
 ├── web/                           # Standalone Next.js 16 Web Playground application
