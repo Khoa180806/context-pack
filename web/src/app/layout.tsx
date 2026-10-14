@@ -31,12 +31,12 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: 'Khoa180806' }],
   creator: 'Khoa180806',
-  metadataBase: new URL('https://context-pack.vercel.app'),
+  metadataBase: new URL('https://context-pack-tool.vercel.app'),
   openGraph: {
     title: 'Context Pack — Deterministic Context Slicing for AI Coding Agents',
     description:
       'Extract and pack highest-value code slices under a token budget. 75% token reduction, zero WASM, 100% in-browser privacy.',
-    url: 'https://context-pack.vercel.app',
+    url: 'https://context-pack-tool.vercel.app',
     siteName: 'Context Pack',
     images: [
       {

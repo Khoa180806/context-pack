@@ -13,13 +13,14 @@
 <p align="center">
   <a href="README.md">English</a> • <a href="README.vi.md">Tiếng Việt</a>
   <br />
-  <a href="https://context-pack.vercel.app">🌐 Trải nghiệm Trực tiếp (Live Playground)</a> •
-  <a href="docs/SPEC.md">Đặc tả kỹ thuật (Spec)</a> •
+  <a href="https://context-pack-tool.vercel.app">🌐 Trải nghiệm Trực tiếp (Live Playground)</a> •
+  <a href="docs/README.md">📚 Tài liệu (Docs)</a> •
+  <a href="docs/02-technical/architecture.md">Kiến trúc (Architecture)</a> •
   <a href="docs/BENCHMARK_RESULTS.md">Báo cáo Benchmark</a>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/phiên_bản-0.1.1-blue.svg?style=for-the-badge" alt="Phiên bản 0.1.1" />
+  <img src="https://img.shields.io/badge/phiên_bản-0.1.2-blue.svg?style=for-the-badge" alt="Phiên bản 0.1.2" />
   <img src="https://img.shields.io/badge/node-%3E%3D18.0.0-339933.svg?style=for-the-badge&logo=node.js&logoColor=white" alt="Node >= 18.0.0" />
   <img src="https://img.shields.io/badge/typescript-5.6-3178C6.svg?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/pure--js-no--wasm-orange.svg?style=for-the-badge" alt="Pure JS" />

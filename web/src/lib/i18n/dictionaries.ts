@@ -10,7 +10,7 @@ export const DICTIONARY = {
       tryDemo: 'Try Demo',
     },
     hero: {
-      badge: 'ai-context-pack v0.1.1 is now live on npm',
+      badge: 'ai-context-pack v0.1.2 is now live on npm',
       titleLine1: 'Deterministic Context Slicing',
       titleLine2: 'for Autonomous AI Agents',
       description:
@@ -75,6 +75,8 @@ export const DICTIONARY = {
     footer: {
       tagline: 'Deterministic Token-Budgeted Context Packaging for AI Coding Agents.',
       docs: 'Documentation',
+      docsHub: 'Documentation Hub',
+      architecture: 'System Architecture',
       spec: 'Technical Spec',
       benchmarkReport: 'Benchmark Report',
       community: 'Community & Code',
@@ -94,7 +96,7 @@ export const DICTIONARY = {
       tryDemo: 'Trải nghiệm ngay',
     },
     hero: {
-      badge: 'ai-context-pack v0.1.1 đã có mặt trên npm',
+      badge: 'ai-context-pack v0.1.2 đã có mặt trên npm',
       titleLine1: 'Đóng Gói Ngữ Cảnh Tối Ưu',
       titleLine2: 'cho AI Coding Agents',
       description:
@@ -159,6 +161,8 @@ export const DICTIONARY = {
     footer: {
       tagline: 'Hạ tầng đóng gói ngữ cảnh mã nguồn theo trần token cho AI Coding Agents.',
       docs: 'Tài liệu',
+      docsHub: 'Tài liệu hướng dẫn (Docs)',
+      architecture: 'Kiến trúc hệ thống',
       spec: 'Đặc tả kỹ thuật (Spec)',
       benchmarkReport: 'Báo cáo Benchmark',
       community: 'Cộng đồng & Mã nguồn',

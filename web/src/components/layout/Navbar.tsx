@@ -45,7 +45,7 @@ export function Navbar({ language, onLanguageToggle }: NavbarProps) {
           <div className="flex items-baseline gap-2">
             <span className="font-bold text-lg text-white tracking-tight">Context Pack</span>
             <span className="text-[11px] font-mono text-cyan-400 bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-500/30">
-              v0.1.1
+              v0.1.2
             </span>
           </div>
         </div>
@@ -99,6 +99,17 @@ export function Navbar({ language, onLanguageToggle }: NavbarProps) {
               <Copy className="w-3.5 h-3.5 text-slate-500 hover:text-slate-300" />
             )}
           </button>
+
+          {/* Docs link */}
+          <a
+            href="https://github.com/Khoa180806/context-pack/blob/main/docs/README.md"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 border border-slate-800 transition"
+          >
+            <span>Docs</span>
+            <ExternalLink className="w-3 h-3 text-slate-500" />
+          </a>
 
           {/* GitHub link */}
           <a

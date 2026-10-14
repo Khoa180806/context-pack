@@ -27,7 +27,7 @@ export function Footer({ language, onLanguageToggle }: FooterProps) {
               </div>
               <span className="font-bold text-base text-white tracking-tight">Context Pack</span>
               <span className="text-[11px] text-cyan-400 bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-500/30">
-                v0.1.1
+                v0.1.2
               </span>
             </div>
 
@@ -48,12 +48,23 @@ export function Footer({ language, onLanguageToggle }: FooterProps) {
             <ul className="space-y-2 text-slate-400 font-sans text-xs">
               <li>
                 <a
-                  href="https://github.com/Khoa180806/context-pack/blob/main/docs/SPEC.md"
+                  href="https://github.com/Khoa180806/context-pack/blob/main/docs/README.md"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-cyan-400 transition inline-flex items-center gap-1"
                 >
-                  <span>{t.spec}</span>
+                  <span>{t.docsHub}</span>
+                  <ExternalLink className="w-3 h-3 text-slate-600" />
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://github.com/Khoa180806/context-pack/blob/main/docs/02-technical/architecture.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-cyan-400 transition inline-flex items-center gap-1"
+                >
+                  <span>{t.architecture}</span>
                   <ExternalLink className="w-3 h-3 text-slate-600" />
                 </a>
               </li>
