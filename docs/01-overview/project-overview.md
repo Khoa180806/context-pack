@@ -31,6 +31,9 @@ Context Pack solves this by evaluating task relevance line-by-line and packing t
 - **Zero-Network Privacy:** Runs 100% locally in-memory. No code, tokens, or telemetry leave the local environment.
 - **Dual Execution Engine:** Distributed simultaneously as a Node.js CLI/SDK and an in-browser Web Playground.
 
+![Context Pack real-time token budgeting and context extraction](../assets/screenshots/cli-demo.gif)
+*Figure 1: Real-time deterministic token budgeting and relevance slicing in the terminal.*
+
 ---
 
 ## 4. Technology Stack

@@ -134,6 +134,12 @@ cx -t "Fix user session invalidation" -f "src/auth/**/*.ts" "src/user.ts" -b 200
 cx pack --task "Refactor tokenizer" --files "src/tokenizer.ts" --budget 1500
 ```
 
+<p align="center">
+  <img src="docs/assets/screenshots/terminal-output.svg" alt="Ảnh kết quả thực thi terminal của Context Pack" width="100%" />
+  <br />
+  <sub>Hình 3: Kết quả thực thi thực tế của lệnh cx với đo lường token và lát cắt mã nguồn tất định.</sub>
+</p>
+
 ### 2. Bảng tham số dòng lệnh
 
 | Tham số | Viết tắt | Mặc định | Mô tả |

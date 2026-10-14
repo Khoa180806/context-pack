@@ -20,7 +20,9 @@ context_pack/
 │   ├── 05-templates/
 │   ├── 06-design/
 │   ├── 07-notes/
-│   └── assets/                    # Architectural diagrams, SVG terminal captures, GIF demo
+│   └── assets/                    # Visual assets (screenshots and diagrams)
+│       ├── diagrams/              # Architecture diagrams (PNG, HTML)
+│       └── screenshots/           # CLI demo GIF, terminal output snapshots, and brand marks
 ├── src/                           # Core Node.js CLI & TypeScript SDK engine
 ├── test/                          # Unit and CLI integration test suite (Vitest)
 ├── web/                           # Standalone Next.js 16 Web Playground application

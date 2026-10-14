@@ -13,6 +13,9 @@ The Web Playground adheres to a strict developer-first aesthetic optimized for c
 - **Strict Zero-Emoji Rule:** All status states and actions use Lucide SVG iconography (`Sparkles`, `Cpu`, `ShieldCheck`, `Terminal`, `Check`, `Copy`) rather than unicode emojis, preserving professional IDE polish.
 - **Typography:** JetBrains Mono / Fira Code / Consolas for code blocks, metrics, and line gutters; Inter / sans-serif for UI labels and navigational prose.
 
+![Context Pack brand mark](../assets/screenshots/context-pack-logo.svg)
+*Figure 1: Context Pack isometric vector brand mark with token crystal motif.*
+
 *(source: `web/src/app/page.tsx:17`, `web/src/components/`)*
 
 ---

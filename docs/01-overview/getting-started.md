@@ -67,6 +67,9 @@ cx -t "Optimize database query" -f "src/db.ts,src/models/*.ts" -b 1500
 cx -t "Explain parser logic" -f "src/parser.ts" -b 1000 --json
 ```
 
+![Context Pack terminal execution successful output](../assets/screenshots/terminal-output.svg)
+*Figure 1: Successful terminal execution of cx command displaying extracted slices, token counts, and execution latency.*
+
 ### Piping Context to Clipboard for LLM Prompts
 
 On Windows PowerShell:

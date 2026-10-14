@@ -137,6 +137,12 @@ cx -t "Fix user session invalidation" -f "src/auth/**/*.ts" "src/user.ts" -b 200
 cx pack --task "Refactor tokenizer" --files "src/tokenizer.ts" --budget 1500
 ```
 
+<p align="center">
+  <img src="docs/assets/screenshots/terminal-output.svg" alt="Context Pack terminal execution output" width="100%" />
+  <br />
+  <sub>Figure 3: Deterministic CLI terminal execution output with exact token counting and slice boundaries.</sub>
+</p>
+
 ### 2. Flag Arguments
 
 | Flag | Short | Default | Description |
