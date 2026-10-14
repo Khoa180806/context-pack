@@ -20,7 +20,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.1.2-blue.svg?style=for-the-badge" alt="Version 0.1.2" />
+  <img src="https://img.shields.io/badge/version-1.0.0-blue.svg?style=for-the-badge" alt="Version 1.0.0" />
   <img src="https://img.shields.io/badge/node-%3E%3D18.0.0-339933.svg?style=for-the-badge&logo=node.js&logoColor=white" alt="Node >= 18.0.0" />
   <img src="https://img.shields.io/badge/typescript-5.6-3178C6.svg?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/pure--js-no--wasm-orange.svg?style=for-the-badge" alt="Pure JS" />
@@ -324,7 +324,7 @@ Comprehensive technical documentation is maintained under the [`docs/`](docs/REA
 - [**Technical Decisions (ADRs)**](docs/02-technical/tech-decisions.md) — ADR-001 through ADR-005 covering tokenizer, Task-Aware Slicing, and knapsack packing.
 - [**Getting Started Guide**](docs/01-overview/getting-started.md) — Prerequisites, global installation, CLI syntax, and SDK examples.
 - [**Development Workflow**](docs/01-overview/development-workflow.md) — Branching, Conventional Commits, testing guidelines, and CI matrix.
-- [**Changelog**](docs/03-product/changelog.md) — Version release history from v0.1.0 to v0.1.2.
+- [**Changelog**](docs/03-product/changelog.md) — Version release history from v0.1.0 to v1.0.0.
 - [**Product Roadmap**](docs/03-product/roadmap.md) — Completed milestones and near-term plans (native MCP server, multi-chunk slicing).
 - [**Deployment Operations**](docs/04-operations/deployment.md) — npm package publishing procedures and Vercel hosting setup.
 - [**Configuration Reference**](docs/04-operations/configuration.md) — Environment variables, CLI flags reference, and operational boundaries.

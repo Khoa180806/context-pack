@@ -10,7 +10,7 @@ export const DICTIONARY = {
       tryDemo: 'Try Demo',
     },
     hero: {
-      badge: 'ai-context-pack v0.1.2 is now live on npm',
+      badge: 'ai-context-pack v1.0.0 is now live on npm',
       titleLine1: 'Deterministic Context Slicing',
       titleLine2: 'for Autonomous AI Agents',
       description:
@@ -96,7 +96,7 @@ export const DICTIONARY = {
       tryDemo: 'Trải nghiệm ngay',
     },
     hero: {
-      badge: 'ai-context-pack v0.1.2 đã có mặt trên npm',
+      badge: 'ai-context-pack v1.0.0 đã có mặt trên npm',
       titleLine1: 'Đóng Gói Ngữ Cảnh Tối Ưu',
       titleLine2: 'cho AI Coding Agents',
       description:

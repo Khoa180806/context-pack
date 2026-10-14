@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ---
 
+## [1.0.0] — 2026-10-14
+
+### Added
+- **Production-Ready Stable Release (v1.0.0):** Stabilized public CLI and TypeScript SDK contract with guaranteed Common Transport Envelope schema compliance.
+- **Comprehensive Technical Documentation Suite:** 13 architectural guides covering four-stage pipeline design, sequence flows, ADRs (ADR-001 to ADR-005), and operational runbooks under `docs/`.
+- **Organized Visual Asset Infrastructure:** Reorganized vector SVGs, terminal recordings, and architectural diagrams under `docs/assets/` (`screenshots/` and `diagrams/`).
+- **Strengthened Security & Repository Cleanliness:** Hardened root `.gitignore` to strictly isolate secrets, environment configs, and internal developer tool artifacts.
+
+### Changed
+- **Optimized Landing Page Performance:** Compressed architectural PNG assets by 51% (lossless Sharp optimization) for high-speed page loads.
+- **Unified Production Deployment URLs:** Standardized production endpoints to `https://context-pack-tool.vercel.app` across OpenGraph metadata, SEO sitemaps, and documentation.
+
+---
+
 ## [0.1.2] — 2026-10-10
 
 ### Added

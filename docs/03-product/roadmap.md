@@ -21,6 +21,12 @@ This document outlines delivered milestones, current stabilization work, and ver
 - Built interactive client-side Web Playground (Next.js 16 Turbopack) with dual-pane split view, line-numbered editor, and bilingual toggle.
 - Validated on enterprise monorepo (`VibeGraph-com`, 994 files) achieving -88.8% average token reduction and 100% hotspot alignment.
 
+### v1.0.0 — Production-Ready Release (Completed)
+- Standardized stable public CLI & TypeScript SDK contract.
+- Comprehensive 13-document architectural knowledge base under `docs/`.
+- Reorganized visual assets into `docs/assets/` and optimized web performance.
+- Fortified repository security and `.gitignore` boundaries.
+
 ---
 
 ## 2. Current Development Focus

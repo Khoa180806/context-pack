@@ -27,7 +27,7 @@ npm install -g ai-context-pack@latest
 Verify installation:
 ```bash
 cx --version
-# Output: 0.1.2
+# Output: 1.0.0
 ```
 
 ### Local Project Dependency (For TypeScript / Node.js Projects)

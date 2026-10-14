@@ -45,7 +45,7 @@ export function Navbar({ language, onLanguageToggle }: NavbarProps) {
           <div className="flex items-baseline gap-2">
             <span className="font-bold text-lg text-white tracking-tight">Context Pack</span>
             <span className="text-[11px] font-mono text-cyan-400 bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-500/30">
-              v0.1.2
+              v1.0.0
             </span>
           </div>
         </div>

@@ -86,7 +86,7 @@ console.log(\`Packed \${result.data.slice_count} high-relevance code slices.\`);
                     {language === 'vi' ? 'Minh họa chạy lệnh cx trong terminal' : 'cx CLI terminal execution demo'}
                   </span>
                 </div>
-                <span className="text-[11px] text-cyan-400 font-mono">v0.1.2</span>
+                <span className="text-[11px] text-cyan-400 font-mono">v1.0.0</span>
               </div>
 
               {/* Terminal GIF Display */}

@@ -27,7 +27,7 @@ export function Footer({ language, onLanguageToggle }: FooterProps) {
               </div>
               <span className="font-bold text-base text-white tracking-tight">Context Pack</span>
               <span className="text-[11px] text-cyan-400 bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-500/30">
-                v0.1.2
+                v1.0.0
               </span>
             </div>
 

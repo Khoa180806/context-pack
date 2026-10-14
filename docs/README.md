@@ -19,7 +19,7 @@ Welcome to the comprehensive technical documentation for **Context Pack** (`ai-c
 - [Technical Decisions & ADRs](02-technical/tech-decisions.md) — Architectural decision records (ADR-001 to ADR-005) covering tokenizer selection, Task-Aware Slicing, and knapsack packing.
 
 ### 03. Product Lifecycle
-- [Changelog](03-product/changelog.md) — Chronological release history from v0.1.0 to v0.1.2 sourced from git commits and semantic version tags.
+- [Changelog](03-product/changelog.md) — Chronological release history from v0.1.0 to v1.0.0 sourced from git commits and semantic version tags.
 - [Product Roadmap](03-product/roadmap.md) — Delivered milestones, current release focus, and planned roadmap items (native MCP server, multi-chunk slicing).
 
 ### 04. Operations & Configuration
